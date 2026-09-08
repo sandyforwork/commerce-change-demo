@@ -445,7 +445,7 @@ const LIST_ROWS = [
 ];
 
 const OP_NAV = [["home","Home","⌂"],["deposits","Deposits","▤"],["refunds","Refunds","↩"],["cancellations","Cancellations","⊘"],["changes","Mass Updates","⇄"]];
-const ABC_NAV = [["home","Home","⌂"],["approvals","Approvals","✓"],["operations","Operations","⇄"],["playbooks","Mass update list","▤"],["audit","Audit","◬"]];
+const ABC_NAV = [["home","Home","⌂"],["approvals","Approvals","✓"],["operations","Operations","⇄"],["playbooks","Mass update list","▤"],["audit","Audit","◫"]];
 
 const OP_SCREENS = [["list","Mass Updates list"],["new","Describe"],["preview","Preview"],["track","Mass update detail"]];
 const ABC_SCREENS = [["queue","Approval queue"],["review","Review & decide"],["results","Execution & results"]];
@@ -585,7 +585,7 @@ function shell(inner) {
     </div>
     <div class="main">
       <div class="topbar">
-        <div style="display:flex;align-items:center;gap:10px"><span class="faint">⊛</span><span class="title">${esc(titles[key])}</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="faint">▥</span><span class="title">${esc(titles[key])}</span></div>
         <div class="search">⌕&nbsp;&nbsp;Search</div>
       </div>
       <div class="body">${inner}</div>
