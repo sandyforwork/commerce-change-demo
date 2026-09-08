@@ -1,2 +1,7 @@
-# commerce-change-demo
-Click-through Commerce Change operator and ABC billing ops mock for leadership review
+# Commerce Change demo
+
+Click-through mock for ABC leadership. No login and no Vercel account required.
+
+**Open this in a browser:**
+
+https://raw.githack.com/sandyforwork/commerce-change-demo/main/index.html
