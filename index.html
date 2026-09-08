@@ -4,8 +4,877 @@
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width, initial-scale=1" />
 <title>AI Mass Updates — end to end</title>
+<style>
+  :root {
+    --bg: #f6f7f9;
+    --surface: #ffffff;
+    --chrome: #fbfbfc;
+    --border: #e6e8eb;
+    --border-soft: #f0f1f3;
+    --text: #16191d;
+    --text-2: #656c76;
+    --text-3: #9aa1ac;
+    --accent: #2563eb;
+    --blue: #2563eb;
+    --green: #16a34a;
+    --orange: #ea580c;
+    --yellow: #ca8a04;
+    --red: #dc2626;
+    --purple: #7c3aed;
+    --cyan: #0891b2;
+    --gray: #6b7280;
+  }
+  * { box-sizing: border-box; }
+  body.exp-operator {
+    --bg: #f3f6f5;
+    --chrome: #f7faf8;
+    --accent: #0f766e;
+    --blue: #0f766e;
+    --border: #d7e3df;
+    --border-soft: #e8efec;
+  }
+  body.exp-abc {
+    --bg: #f4f6fb;
+    --chrome: #f7f8fc;
+    --accent: #1d4ed8;
+    --blue: #1d4ed8;
+  }
+  body {
+    margin: 0;
+    padding: 24px;
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Inter, Roboto, Helvetica, Arial, sans-serif;
+    font-size: 14px;
+    line-height: 20px;
+  }
+  body.tour-on { padding-bottom: 240px; }
+  .wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
+  h1 { font-size: 22px; line-height: 28px; margin: 0; font-weight: 600; }
+  .head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
+
+  .seg { display: flex; gap: 4px; padding: 3px; border-radius: 8px; background: #eceef1; }
+  .seg span {
+    padding: 5px 12px; border-radius: 6px; font-size: 13px; cursor: pointer;
+    color: var(--text-2); border: 1px solid transparent; user-select: none;
+  }
+  .seg span.on { background: #fff; border-color: var(--border); color: var(--accent); font-weight: 600; }
+
+  .pills { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
+  .pill {
+    display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px;
+    border-radius: 999px; font-size: 12px; cursor: pointer; user-select: none;
+    border: 1px solid var(--border); color: var(--text-2); background: #fff;
+  }
+  .dot { width: 8px; height: 8px; border-radius: 3px; display: inline-block; flex: 0 0 8px; }
+  .pill.on { font-weight: 600; }
+
+  .page { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
+  .crumb { font-size: 12px; color: var(--text-3); margin-bottom: 6px; }
+
+  .side {
+    width: 212px; flex: 0 0 212px; border-right: 1px solid var(--border); background: var(--chrome);
+    display: flex; flex-direction: column; justify-content: space-between; padding: 10px; min-height: 560px;
+  }
+  .org {
+    display: flex; align-items: center; gap: 8px; padding: 8px;
+    border: 1px solid var(--border); border-radius: 8px; background: #fff;
+  }
+  .org .av {
+    width: 26px; height: 26px; border-radius: 6px; display: flex; align-items: center; justify-content: center;
+    font-size: 10px; font-weight: 700; color: #fff; flex: 0 0 26px;
+  }
+  .org .nm { font-size: 11.5px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .org .sub { font-size: 11px; color: var(--text-3); }
+  .ff-logo {
+    display: flex; align-items: center; gap: 8px; padding: 8px 8px 10px;
+    margin-bottom: 8px; border-bottom: 1px solid var(--border);
+  }
+  .ff-mark {
+    width: 32px; height: 32px; border-radius: 8px; flex: 0 0 32px;
+    background: linear-gradient(145deg, #14b8a6 0%, #0f766e 70%);
+    color: #fff; font-size: 11px; font-weight: 800; letter-spacing: -0.4px;
+    display: flex; align-items: center; justify-content: center;
+    box-shadow: inset 0 0 0 2px rgba(255,255,255,.18);
+  }
+  .ff-name { font-size: 12px; font-weight: 750; color: #0f766e; line-height: 14px; }
+  .ff-tag { font-size: 10px; color: #5b7a74; }
+  .nav { display: flex; flex-direction: column; gap: 2px; margin-top: 12px; }
+  .nav div {
+    display: flex; align-items: center; gap: 8px; padding: 6px 8px; border-radius: 6px;
+    font-size: 13px; color: var(--text-2); cursor: pointer;
+  }
+  .nav div .g { width: 14px; color: var(--text-3); }
+  .nav div.on { background: color-mix(in srgb, var(--accent) 12%, #fff); color: var(--accent); font-weight: 600; }
+  .nav div.on .g { color: var(--accent); }
+
+  .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+  .topbar {
+    display: flex; align-items: center; justify-content: space-between; gap: 12px;
+    padding: 10px 16px; border-bottom: 1px solid var(--border);
+  }
+  .topbar .title { font-size: 14px; font-weight: 650; }
+  .search {
+    width: 250px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 7px;
+    font-size: 13px; color: var(--text-3); background: #fff;
+  }
+  .body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
+
+  .rowbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .tabs { display: flex; gap: 4px; padding: 3px; border-radius: 8px; background: #f2f3f5; }
+  .tabs span { padding: 5px 10px; border-radius: 6px; font-size: 13px; color: var(--text-2); border: 1px solid transparent; }
+  .tabs span.on { background: #fff; border-color: var(--border); color: var(--text); font-weight: 600; }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 7px;
+    font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border);
+    background: #fff; color: var(--text); user-select: none;
+  }
+  .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .btn.danger { color: var(--red); border-color: #f2c8c8; }
+  .btn:hover { filter: brightness(0.98); }
+
+  .menu {
+    position: absolute; top: 36px; right: 0; z-index: 20; width: 252px; padding: 6px;
+    border: 1px solid var(--border); border-radius: 9px; background: #fff;
+    box-shadow: 0 6px 20px rgba(16,19,26,.10);
+  }
+  .menu div {
+    display: flex; align-items: center; gap: 8px; padding: 7px 8px; border-radius: 6px;
+    font-size: 13px; cursor: pointer;
+  }
+  .menu div:hover { background: #f5f6f8; }
+
+  .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
+  .kpi { border: 1px solid var(--border); border-top-width: 2px; border-radius: 8px; padding: 13px 14px; background: #fff; }
+  .kpi .l { font-size: 12px; color: var(--text-2); }
+  .kpi .v { font-size: 24px; font-weight: 650; margin-top: 6px; }
+
+  .filters { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
+  .filters .left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+  .fin { width: 186px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 7px; font-size: 13px; color: var(--text-3); background: #fff; }
+  .chip {
+    display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 7px;
+    font-size: 12px; color: var(--text-2); border: 1px dashed #d7dae0; background: #fff; cursor: pointer;
+  }
+
+  .card { border: 1px solid var(--border); border-radius: 8px; background: #fff; }
+  .card.pad { padding: 14px; }
+  .card .ch { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+  .card .ch b { font-size: 13px; font-weight: 650; }
+
+  table { width: 100%; border-collapse: collapse; }
+  th {
+    text-align: left; font-size: 12px; font-weight: 500; color: var(--text-2);
+    padding: 9px 10px; border-bottom: 1px solid var(--border); white-space: nowrap;
+  }
+  td { font-size: 13px; padding: 10px; border-bottom: 1px solid var(--border-soft); white-space: nowrap; }
+  td.wrap-cell { white-space: normal; }
+  tr.sel { background: #f7f9ff; }
+  .link { color: var(--accent); font-weight: 600; cursor: pointer; }
+  .muted { color: var(--text-2); }
+  .faint { color: var(--text-3); }
+  .strong { font-weight: 600; }
+  .scroll { overflow-x: auto; }
+
+  .badge {
+    display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px;
+    font-size: 11px; font-weight: 550; white-space: nowrap; border: 1px solid currentColor;
+  }
+  .badge i { font-style: normal; }
+
+  .grid2 { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(0,1fr); gap: 12px; }
+  .grid11 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }
+  .quote {
+    border: 1px solid var(--border); border-left-width: 3px; border-radius: 8px; padding: 12px;
+    font-size: 13px; background: var(--chrome); white-space: pre-wrap; line-height: 20px;
+  }
+  .kv { display: flex; justify-content: space-between; gap: 10px; font-size: 13px; }
+  .kv span:first-child { color: var(--text-2); flex: 0 0 auto; }
+  .kv span:last-child { text-align: right; }
+  .stack { display: flex; flex-direction: column; gap: 9px; }
+  .foot { display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 12px; }
+  .foot .r { display: flex; align-items: center; gap: 14px; font-size: 12px; color: var(--text-2); }
+  .pg { display: inline-flex; gap: 4px; }
+  .pg span { border: 1px solid var(--border); border-radius: 6px; padding: 3px 8px; font-size: 12px; color: var(--text-3); }
+  .note { font-size: 12px; color: var(--text-3); }
+  .hint { text-align: center; font-size: 12px; color: var(--text-3); padding-top: 4px; }
+  .tour-launch {
+    margin-left: auto; padding: 7px 13px; border: 0; border-radius: 8px; cursor: pointer;
+    background: #16191d; color: #fff; font: 600 13px/18px inherit; box-shadow: 0 2px 8px rgba(0,0,0,.12);
+  }
+  .tour-shade { position: fixed; inset: 0; z-index: 90; background: rgba(15,23,42,.18); pointer-events: none; }
+  .tour-target {
+    position: relative !important; z-index: 92 !important; border-radius: 9px;
+    box-shadow: 0 0 0 4px #fff, 0 0 0 7px #60a5fa, 0 14px 40px rgba(0,0,0,.18) !important;
+  }
+  .tour-panel {
+    position: fixed; z-index: 94; left: 50%; bottom: 16px; transform: translateX(-50%);
+    width: min(720px, calc(100vw - 32px));
+    border-radius: 14px; background: #fff; box-shadow: 0 18px 55px rgba(0,0,0,.22); overflow: hidden;
+  }
+  .tour-progress { height: 4px; background: #e5e7eb; }
+  .tour-progress span { display: block; height: 100%; background: var(--blue); transition: width .2s ease; }
+  .tour-content { padding: 16px 20px 12px; }
+  .tour-kicker { color: var(--blue); font-size: 11px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+  .tour-content h2 { margin: 6px 0 8px; font-size: 18px; line-height: 24px; }
+  .tour-content p { margin: 0; color: var(--text-2); font-size: 13px; line-height: 20px; }
+  .tour-ai {
+    display: flex; flex-direction: column; gap: 4px; margin-top: 12px; padding: 10px 11px; border-radius: 8px;
+    background: #eefaf1; border: 1px solid #c8ebd1; color: #166534; font-size: 12px; line-height: 18px;
+  }
+  .tour-ai b { font-size: 11px; letter-spacing: .04em; text-transform: uppercase; }
+  .tour-now { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 16px; }
+  .tour-now div { padding: 11px; border: 1px solid var(--border); border-radius: 8px; background: var(--chrome); }
+  .tour-now b { display: block; margin-bottom: 3px; font-size: 12px; }
+  .tour-now span { color: var(--text-2); font-size: 11px; line-height: 16px; }
+  .tour-actions { display: flex; align-items: center; gap: 8px; padding: 12px 18px; border-top: 1px solid var(--border); }
+  .tour-actions .count { margin-right: auto; color: var(--text-3); font-size: 11px; }
+  .tour-actions button { padding: 7px 12px; border: 1px solid var(--border); border-radius: 7px; background: #fff; cursor: pointer; }
+  .tour-actions button.next { background: var(--blue); border-color: var(--blue); color: #fff; font-weight: 600; }
+  @media (max-width: 900px) { .kpis { grid-template-columns: repeat(2, minmax(0,1fr)); } .grid2, .grid11 { grid-template-columns: 1fr; } }
+  @media (max-width: 640px) { .tour-now { grid-template-columns: 1fr; } }
+</style>
 </head>
 <body>
-<p>Use commerce-change-demo.html</p>
+<div class="wrap">
+  <div class="head">
+    <h1>AI Mass Updates — end to end</h1>
+    <div class="seg" id="persona"></div>
+    <button class="tour-launch" onclick="startTour()">▶ Leadership walkthrough</button>
+  </div>
+  <div class="pills" id="cases"></div>
+  <div class="pills" id="screens"></div>
+  <div id="app"></div>
+  <div class="hint">Click through: pick from the <b>pre-defined mass update list</b> in <b>New Mass update</b>, or switch persona to see the ABC side of the same request.</div>
+</div>
+<div id="tour"></div>
+
+<script>
+const HUE = { gray:"var(--gray)", purple:"var(--purple)", green:"var(--green)", yellow:"var(--yellow)",
+              cyan:"var(--cyan)", blue:"var(--blue)", orange:"var(--orange)", red:"var(--red)" };
+const TINT = { gray:"#f3f4f6", purple:"#f5f0ff", green:"#eefaf1", yellow:"#fdf6e3", cyan:"#e9f7fb",
+               blue:"#eef2ff", orange:"#fff2ea", red:"#fdeeee" };
+const STATUS_HUE = {
+  "In Review":"blue", "Needs Input":"orange", "Completed":"green", "Partial Success":"yellow",
+  "Draft":"gray", "Eligible":"green", "Excluded":"orange", "Done":"green", "Waiting":"blue",
+  "Queued":"blue", "Not started":"gray", "Skipped":"gray", "Auto-cleared":"green",
+  "Awaiting approval":"orange", "AI draft":"green", "AI summary":"green", "AI grouped":"green"
+};
+
+const CASES = [
+  {
+    id:"cancel", playbook:"Cancel members", hue:"red", operation:"SUBSCRIPTION_CANCEL",
+    dcr:"DCR-14818", club:"IRON ASYLUM GYM", clubNo:"03208",
+    request:`Please mass cancel all members in Commerce using code CCC.
+Thank you!  03208 IRON ASYLUM GYM
+
+Requested due date: Aug 27, 2026 · One time · Increasing invoices: No`,
+    details:[["Mass update list","Cancel members"],["Location","IRON ASYLUM GYM · 03208"],["Scope","All active members"],
+             ["Cancel code","CCC"],["Effective","Aug 27, 2026"],["Invoices due","None"]],
+    kpis:[{l:"Members found",v:"412",h:"gray"},{l:"Eligible",v:"389",h:"green"},
+          {l:"Excluded",v:"23",h:"orange"},{l:"Invoices stopped",v:"$14,205",h:"blue"}],
+    columns:["Member","Subscription","Status","Result","Reason"],
+    rows:[["941951","Monthly Dues","ACTIVE","Eligible","—"],
+          ["941962","Monthly Dues","FROZEN","Eligible","—"],
+          ["942014","Monthly Dues","PAID_UPFRONT_OPEN","Eligible","—"],
+          ["942101","Monthly Dues","PENDING_CANCELLATION","Excluded","Cancel already pending"],
+          ["942130","Monthly Dues","FROZEN","Excluded","Cancel option booked"],
+          ["942144","Monthly Dues","RFC","Excluded","Status not cancellable"]],
+    changeId:"CHG-1180", operationNo:"MM-2026-0442", members:"389", autoCleared:false,
+    queueReason:"Revenue-reducing · whole location",
+    progress:[["Submitted","Done","389 items · MM-2026-0442"],["Validated","Done","Ready for approval"],
+              ["ABC review","Waiting","Revenue-reducing change"],["Execution","Not started","Runs after approval"],
+              ["Results","Not started","You will be notified"]],
+    summary:"Cancels every active membership at IRON ASYLUM GYM 03208 with code CCC, effective 27 Aug. About $14,205 of remaining invoices stop. 23 members excluded by status rules.",
+    checks:[["Scope","One location, all active members"],["Statuses","ACTIVE / FROZEN / PUF / PUFO only"],
+            ["Cancel code","CCC exists at this club"],["Excluded","23 rows, reasons attached"],
+            ["Requester ≠ approver","Satisfied"]],
+    runPhases:[["Approved","Done","status → PENDING_EXECUTION"],["Batch","Done","389 operation items"],
+               ["Billing","Done","bulk-operation → commit"],["DataTrak","Skipped","Not a DT location"]],
+    resultKpis:[{l:"Cancelled",v:"381",h:"green"},{l:"Failed",v:"8",h:"red"},
+                {l:"Status",v:"PARTIAL",h:"yellow"},{l:"Run time",v:"4 min",h:"gray"}],
+    failures:[["942190","Billing cycle is active. Please retry transfer later."],
+              ["942233","Could not find appropriate subscription"]]
+  },
+  {
+    id:"invoice", playbook:"Zero out invoices", hue:"orange", operation:"INVOICE_ADJUSTMENT",
+    dcr:"DCR-14692", club:"CRUNCH DIVISION", clubNo:"22004",
+    request:`Please zero out all DUES invoices for 8/25/2026-10/31/2026.
+Club 22004 CRUNCH DIVISION will be closed during that time and
+do not want to bill dues invoices.
+
+Profit centre: DUES · Consecutive invoices changed: 2`,
+    details:[["Mass update list","Zero out invoices"],["Location","CRUNCH DIVISION · 22004"],["Profit centre","DUES"],
+             ["Window","Aug 25 – Oct 31, 2026"],["New amount","0.00"],["Due dates","Unchanged"]],
+    kpis:[{l:"Members found",v:"1,842",h:"gray"},{l:"Eligible",v:"1,769",h:"green"},
+          {l:"Excluded",v:"73",h:"orange"},{l:"Dues waived",v:"$61,915",h:"blue"}],
+    columns:["Member","Invoice","State","Result","Reason"],
+    rows:[["310442","Dues · 25 Sep","Unpaid","Eligible","—"],
+          ["310517","Dues · 25 Sep","Unpaid","Eligible","—"],
+          ["310523","Dues · 25 Oct","Unpaid","Eligible","—"],
+          ["310588","Dues · 25 Sep","Paid","Excluded","Needs a refund, not an adjustment"],
+          ["310604","Dues · 25 Sep","Unpaid","Excluded","Adjustment already pending"],
+          ["310661","—","—","Excluded","No dues invoice in window"]],
+    changeId:"CHG-1177", operationNo:"MM-2026-0468", members:"1,769", autoCleared:false,
+    queueReason:"Money leaves the business · $61,915",
+    progress:[["Submitted","Done","1,769 items · MM-2026-0468"],["Validated","Done","Ready for approval"],
+              ["ABC review","Waiting","Finance lane · $61,915"],["Execution","Not started","Runs after approval"],
+              ["Results","Not started","You will be notified"]],
+    summary:"Club 22004 is closed 25 Aug to 31 Oct, so dues invoices in that window go to zero for 1,769 members. About $61,915 is given up. 41 members already paid and need a refund instead.",
+    checks:[["Window","Matches the stated closure dates"],["Change type","Amount only, due dates untouched"],
+            ["Paid invoices","41 routed to refund, not dropped"],["Pending adjustments","28 excluded, one active allowed"],
+            ["Finance","Impact snapshot shared"]],
+    runPhases:[["Approved","Done","status → PENDING_EXECUTION"],["Batch","Done","1,769 operation items"],
+               ["Billing","Done","invoice amounts → 0.00"],["DataTrak","Skipped","Not a DT location"]],
+    resultKpis:[{l:"Adjusted",v:"1,769",h:"green"},{l:"Failed",v:"0",h:"green"},
+                {l:"Status",v:"SUCCESS",h:"green"},{l:"Run time",v:"11 min",h:"gray"}],
+    failures:[]
+  },
+  {
+    id:"price", playbook:"Change price", hue:"purple", operation:"SUBSCRIPTION_PRICE_UPDATE",
+    dcr:"DCR-14792", club:"BFT BLACKBURN", clubNo:"Glofox",
+    request:`BFT Blackburn BPR sweep.
+
+Bulk price raise across Glofox memberships, effective with the
+next billing cycle. Existing discounts stay as they are.`,
+    details:[["Mass update list","Change price"],["Location","BFT BLACKBURN · Glofox"],["Plans","All recurring memberships"],
+             ["Increase","Per plan, from the audit sheet"],["Effective","Next billing cycle"],["Discounts","Preserved"]],
+    kpis:[{l:"Members found",v:"1,204",h:"gray"},{l:"Eligible",v:"1,131",h:"green"},
+          {l:"Excluded",v:"73",h:"orange"},{l:"Monthly increase",v:"+$9,048",h:"green"}],
+    columns:["Member","Plan","Change","Result","Reason"],
+    rows:[["775120","Unlimited","39.99 → 47.99","Eligible","—"],
+          ["775184","Unlimited","39.99 → 47.99","Eligible","—"],
+          ["775206","8 Session","29.99 → 34.99","Eligible","—"],
+          ["775298","Unlimited","—","Excluded","Paid upfront, not supported"],
+          ["775344","8 Session","—","Excluded","Pending cancellation"],
+          ["775401","Unlimited","—","Excluded","No future invoices"]],
+    changeId:"CHG-1178", operationNo:"MM-2026-0463", members:"1,131", autoCleared:false,
+    queueReason:"Price increase · finance lane",
+    progress:[["Submitted","Done","1,131 items · MM-2026-0463"],["Validated","Done","Ready for approval"],
+              ["ABC review","Waiting","Price change · finance lane"],["Execution","Not started","Runs after approval"],
+              ["Results","Not started","You will be notified"]],
+    summary:"Bulk price raise for 1,131 Glofox memberships at BFT Blackburn, adding about $9,048 monthly recurring. Takes effect next billing cycle; no current invoice changes. Discounts preserved.",
+    checks:[["Effective date","Next cycle, nothing retroactive"],["Subtypes","Paid upfront excluded per guide"],
+            ["Discounts","Preserved on all eligible rows"],["Excluded","73 rows, reasons attached"],
+            ["Finance","Impact snapshot shared"]],
+    runPhases:[["Approved","Done","status → PENDING_EXECUTION"],["Batch","Done","1,131 operation items"],
+               ["Billing","Done","future price adjustments written"],["Member comms","Queued","Price notice, 30 days ahead"]],
+    resultKpis:[{l:"Repriced",v:"1,118",h:"green"},{l:"Failed",v:"13",h:"red"},
+                {l:"Status",v:"PARTIAL",h:"yellow"},{l:"Run time",v:"9 min",h:"gray"}],
+    failures:[["775512","Future invoices list cannot be empty. SubscriptionId: …"],
+              ["775560","An error occurred while processing bulk request"]]
+  },
+  {
+    id:"create", playbook:"Create subscription", hue:"cyan", operation:"SUBSCRIPTION_CREATE_V2",
+    dcr:"DCR-14827", club:"LFG", clubNo:"32318–32325",
+    request:`32318 - 32325 - LFG - Mass Update - Subscription Create
+Annual Fees per Annual Fee Audit.
+
+Pre-approved. Add the annual fee subscription to members
+identified in the audit across the eight locations.`,
+    details:[["Mass update list","Create subscription"],["Locations","LFG · 32318–32325"],["Item","Annual Fee"],
+             ["Source","Annual Fee Audit"],["First due date","Per audit sheet"],["Renewal","Annual"]],
+    kpis:[{l:"Members in audit",v:"2,640",h:"gray"},{l:"Eligible",v:"2,588",h:"green"},
+          {l:"Excluded",v:"52",h:"orange"},{l:"Fees added",v:"$126,812",h:"green"}],
+    columns:["Member","Location","Item","Result","Reason"],
+    rows:[["881204","32318","Annual Fee","Eligible","—"],
+          ["881377","32319","Annual Fee","Eligible","—"],
+          ["881490","32322","Annual Fee","Eligible","—"],
+          ["881512","32323","Annual Fee","Excluded","Annual fee already exists"],
+          ["881588","32325","Annual Fee","Excluded","Agreement cancelled"],
+          ["881604","32325","Annual Fee","Excluded","Presale agreement"]],
+    changeId:"CHG-1181", operationNo:"MM-2026-0474", members:"2,588", autoCleared:false,
+    queueReason:"Adds charges to members · 8 locations",
+    progress:[["Submitted","Done","2,588 items · MM-2026-0474"],["Validated","Done","Ready for approval"],
+              ["ABC review","Waiting","Adds charges · finance lane"],["Execution","Not started","Runs after approval"],
+              ["Results","Not started","You will be notified"]],
+    summary:"Annual fee subscriptions added for 2,588 members across eight LFG locations, following the Annual Fee Audit. About $126,812 will bill on the audit's due dates. 52 already have the fee or are not billable.",
+    checks:[["Scope","Eight locations from the audit"],["Duplicates","Members with the fee already excluded"],
+            ["Due dates","From the audit sheet, all future"],["Pre-approval","Attached to the request"],
+            ["Finance","Impact snapshot shared"]],
+    runPhases:[["Approved","Done","status → PENDING_EXECUTION"],["Batch","Done","2,588 operation items"],
+               ["Billing","Done","subscriptions created"],["Member comms","Queued","Annual fee notice"]],
+    resultKpis:[{l:"Created",v:"2,571",h:"green"},{l:"Failed",v:"17",h:"red"},
+                {l:"Status",v:"PARTIAL",h:"yellow"},{l:"Run time",v:"16 min",h:"gray"}],
+    failures:[["881702","Start Date must be less than or equal to First Due Date"],
+              ["881744","Couldn't find target RCM entity"]]
+  },
+  {
+    id:"member", playbook:"Update membership type", hue:"green", operation:"MEMBERSHIP_TYPE_UPDATE",
+    dcr:"DCR-14844", club:"FORMA GYM WALNUT CREEK", clubNo:"005538",
+    request:`Membership Type Mass Update.
+
+Members on the attached list came across with the wrong
+membership type. Set them to Corporate and restore the
+original member-since date.`,
+    details:[["Mass update list","Update membership type"],["Location","FORMA GYM WALNUT CREEK · 005538"],
+             ["Membership type","Corporate"],["Member since","Legacy join date"],
+             ["Billing impact","None"],["Source","Conversion delta"]],
+    kpis:[{l:"Members found",v:"1,204",h:"gray"},{l:"Eligible",v:"1,204",h:"green"},
+          {l:"Excluded",v:"0",h:"green"},{l:"Money moved",v:"$0",h:"green"}],
+    columns:["Member","Type","Member since","Result","Reason"],
+    rows:[["775120","Standard → Corporate","20260314 → 20190314","Eligible","—"],
+          ["775184","Standard → Corporate","20260314 → 20200902","Eligible","—"],
+          ["775206","Standard → Corporate","20260314 → 20171120","Eligible","—"],
+          ["775231","Standard → Corporate","20260314 → 20211004","Eligible","—"]],
+    changeId:"CHG-1176", operationNo:"MM-2026-0470", members:"1,204", autoCleared:true,
+    queueReason:"Demographic only · auto-cleared",
+    progress:[["Submitted","Done","1,204 items · MM-2026-0470"],["Validated","Done","Ready for execution"],
+              ["ABC review","Done","Auto-cleared by policy"],["Execution","Done","1,204 updated"],
+              ["Results","Done","No failures"]],
+    summary:"Conversion clean-up for 1,204 members: membership type set to Corporate and the legacy join date restored. No billing effect. Cleared by policy without a reviewer.",
+    checks:[["Money impact","None, demographic fields only"],["Scope","Conversion delta list only"],
+            ["Excluded","None"],["Policy match","Demographic auto-clear rule"],["Recorded","Actor and snapshot stored"]],
+    runPhases:[["Auto-cleared","Done","Policy engine, no queue"],["Batch","Done","1,204 operation items"],
+               ["Billing","Done","member records updated"],["DataTrak","Skipped","Not a DT location"]],
+    resultKpis:[{l:"Updated",v:"1,204",h:"green"},{l:"Failed",v:"0",h:"green"},
+                {l:"Status",v:"SUCCESS",h:"green"},{l:"Run time",v:"6 min",h:"gray"}],
+    failures:[]
+  }
+];
+
+const LIST_ROWS = [
+  {change:"CHG-1181",status:"In Review",caseId:"create",playbook:"Create subscription",hue:"cyan",location:"LFG · 32318–32325",dcr:"DCR-14827",submitted:"08/27/2026",members:"2,588"},
+  {change:"CHG-1180",status:"In Review",caseId:"cancel",playbook:"Cancel members",hue:"red",location:"IRON ASYLUM GYM · 03208",dcr:"DCR-14818",submitted:"08/27/2026",members:"389"},
+  {change:"CHG-1178",status:"In Review",caseId:"price",playbook:"Change price",hue:"purple",location:"BFT BLACKBURN · Glofox",dcr:"DCR-14792",submitted:"08/26/2026",members:"1,131"},
+  {change:"CHG-1177",status:"Needs Input",caseId:"invoice",playbook:"Zero out invoices",hue:"orange",location:"CRUNCH DIVISION · 22004",dcr:"DCR-14692",submitted:"08/21/2026",members:"1,769"},
+  {change:"CHG-1176",status:"Completed",caseId:"member",playbook:"Update membership type",hue:"green",location:"FORMA GYM WALNUT CREEK · 005538",dcr:"DCR-14844",submitted:"08/28/2026",members:"1,204"},
+  {change:"CHG-1174",status:"Partial Success",caseId:"cancel",playbook:"Cancel members",hue:"red",location:"EOS FITNESS · 40516",dcr:"DCR-14831",submitted:"08/28/2026",members:"4,597"},
+  {change:"CHG-1172",status:"Completed",caseId:"invoice",playbook:"Zero out invoices",hue:"orange",location:"EMERALD CITY ATHLETICS",dcr:"DCR-14817",submitted:"08/27/2026",members:"864"}
+];
+
+const OP_NAV = [["home","Home","⌂"],["deposits","Deposits","▤"],["refunds","Refunds","↩"],["cancellations","Cancellations","⊘"],["changes","Mass Updates","⇄"]];
+const ABC_NAV = [["home","Home","⌂"],["approvals","Approvals","✓"],["operations","Operations","⇄"],["playbooks","Mass update list","▤"],["audit","Audit","◭"]];
+
+const OP_SCREENS = [["list","Mass Updates list"],["new","Describe"],["preview","Preview"],["track","Mass update detail"]];
+const ABC_SCREENS = [["queue","Approval queue"],["review","Review & decide"],["results","Execution & results"]];
+
+let state = { persona:"operator", caseId:"cancel", op:"list", abc:"queue", menu:false };
+let tourIndex = -1;
+const TOUR = [
+  {
+    title:"Talking about mass updates",
+    text:"Today, a mass update moves through DCR or Jira, SQL and CSV preparation, Portal upload, and a separate ABC approval. AI Mass Updates turns that handoff into one guided, visible workflow.",
+    welcome:true,
+    boxes:[["Today","Tickets, spreadsheets, handoffs and limited visibility."],["What changes","Describe, preview, submit, approve and track in one place."],["How fast we could become","Hours of coordinated work can become a guided request in minutes."]],
+    state:{persona:"operator",op:"list"}
+  },
+  {
+    title:"One place to start and track every change",
+    text:"Operators see requests, status, affected members and turnaround without chasing a ticket or asking ABC for an update.",
+    selector:".page",
+    state:{persona:"operator",op:"list"}
+  },
+  {
+    title:"Start from the pre-defined mass update list",
+    text:"The operator chooses the business change—not a Portal guide or an internal operation code. Each item in the pre-defined mass update list maps to an approved Mass Modifications operation.",
+    selector:".body .rowbar .btn.primary",
+    state:{persona:"operator",op:"list",menu:true}
+  },
+  {
+    title:"Describe the outcome in plain language",
+    text:"The request can come from the operator or an existing DCR. AI reads the request and drafts structured details such as location, scope, dates and cancel code.",
+    selector:".grid2 > .card:nth-child(2)",
+    state:{persona:"operator",op:"new",menu:false},
+    ai:"AI is used here to interpret and structure the request. It does not change member data or run the operation."
+  },
+  {
+    title:"Preview impact before submitting",
+    text:"The operator sees eligible and excluded members, reasons, and financial impact before anything leaves their hands.",
+    selector:".kpis",
+    state:{persona:"operator",op:"preview"},
+    ai:"AI can explain the preview and exclusion reasons. Eligibility and financial calculations come from governed business rules and source data."
+  },
+  {
+    title:"Submit once, then follow progress",
+    text:"The request becomes a traceable change with validation, ABC review, execution and results shown in one timeline.",
+    selector:".grid2 > .card:first-child",
+    state:{persona:"operator",op:"track"},
+    ai:"AI can summarize status and suggest next actions. It cannot approve or execute the change."
+  },
+  {
+    title:"ABC gets a risk-based approval queue",
+    text:"Billing Ops sees why each request needs review—revenue impact, member charges or location-wide scope. Safe demographic updates can auto-clear under explicit policy.",
+    selector:".card",
+    state:{persona:"abc",abc:"queue"}
+  },
+  {
+    title:"AI prepares the review, people make the decision",
+    text:"The reviewer gets a concise impact summary, governed checks, exclusions and a sample of affected records before deciding.",
+    selector:".grid2 > .card:first-child",
+    state:{persona:"abc",abc:"review"},
+    ai:"AI summarizes and explains evidence. The ABC reviewer remains the approver; AI cannot approve on their behalf."
+  },
+  {
+    title:"Approval is the execution boundary",
+    text:"Only an authorized ABC reviewer can select “Approve and run.” The existing Mass Modifications service performs the operation and preserves its controls and audit trail.",
+    selector:".body .rowbar .btn.primary",
+    state:{persona:"abc",abc:"review"},
+    ai:"AI is outside the execution path. It never calls the approval endpoint or writes member, subscription or invoice changes."
+  },
+  {
+    title:"Results are visible and actionable",
+    text:"Success, failures and run phases are returned to both teams. Exceptions are grouped so the next request can focus only on unresolved records.",
+    selector:".grid11 > .card:nth-child(2)",
+    state:{persona:"abc",abc:"results"},
+    ai:"AI groups similar errors and drafts a retry plan. Re-validation and human approval still happen before any retry."
+  },
+  {
+    title:"From coordinated effort to controlled speed",
+    text:"AI Mass Updates removes preparation and status-chasing while keeping ABC approval, governed rules and the current execution service in control.",
+    welcome:true,
+    boxes:[["Faster","A guided request and preview in minutes."],["Safer","Preview, exclusions, approval and audit by design."],["Clear AI boundary","AI interprets and explains; people approve; services execute."]],
+    state:{persona:"operator",op:"list"}
+  }
+];
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const cur = () => CASES.find(c => c.id === state.caseId) || CASES[0];
+const badge = t => `<span class="badge" style="color:${HUE[STATUS_HUE[t]||"gray"]};background:${TINT[STATUS_HUE[t]||"gray"]}"><i>${esc(t)}</i></span>`;
+const dot = h => `<span class="dot" style="background:${HUE[h]}"></span>`;
+const kpis = items => `<div class="kpis">${items.map(k =>
+  `<div class="kpi" style="border-top-color:${HUE[k.h]}"><div class="l">${esc(k.l)}</div><div class="v" style="color:${HUE[k.h]}">${esc(k.v)}</div></div>`).join("")}</div>`;
+const filters = (ph, chips) => `<div class="filters"><div class="left"><div class="fin">${esc(ph)}</div>${
+  chips.map(c=>`<span class="chip">＋ ${esc(c)}</span>`).join("")}</div><span class="chip">⇅ View</span></div>`;
+const foot = (sel,total) => `<div class="foot"><span class="note">${sel} of ${total} row(s) selected.</span>
+  <div class="r"><span>Rows per page 10</span><span>Page 1 of 1</span>
+  <span class="pg"><span>≪</span><span>‹</span><span>›</span><span>≫</span></span></div></div>`;
+
+function shell(inner) {
+  const c = cur(), isOp = state.persona === "operator";
+  const nav = isOp ? OP_NAV : ABC_NAV;
+  const activeNav = isOp ? "changes" : (state.abc === "results" ? "operations" : "approvals");
+  const crumbs = isOp
+    ? {list:"Dashboard / Mass Updates", new:"Dashboard / Mass Updates / New", preview:"Dashboard / Mass Updates / New", track:"Dashboard / Mass Updates / "+c.changeId}
+    : {queue:"Data Administration / Approvals", review:"Data Administration / Approvals / "+c.operationNo, results:"Data Administration / Operations / "+c.operationNo};
+  const titles = isOp
+    ? {list:"Mass Updates", new:"New Mass update", preview:"New Mass update", track:c.changeId}
+    : {queue:"Approvals", review:c.operationNo, results:c.operationNo};
+  const key = isOp ? state.op : state.abc;
+  const org = isOp ? c.club : "ABC Fitness Solutions";
+  const orgSub = isOp ? c.clubNo : "Data Administration";
+  const avatar = isOp ? c.club.slice(0,2) : "ABC";
+  const avatarBg = isOp ? "var(--accent)" : "var(--blue)";
+  const user = isOp ? "Alex Brown" : "Morgan Geiszler";
+  const userSub = isOp ? "Operator" : "Billing Ops · approver";
+  const userBg = isOp ? "var(--purple)" : "var(--green)";
+  return `
+  <div class="crumb">${esc(crumbs[key])}</div>
+  <div class="page">
+    <div class="side">
+      <div>
+        ${isOp ? `<div class="ff-logo"><div class="ff-mark">FF</div><div><div class="ff-name">Fitness Fitness</div><div class="ff-tag">Club portal</div></div></div>` : ""}
+        <div class="org">
+          <div class="av" style="background:${avatarBg}">${esc(avatar)}</div>
+          <div style="min-width:0;flex:1"><div class="nm">${esc(org)}</div><div class="sub">${esc(orgSub)}</div></div>
+          <span class="faint" style="font-size:11px">⌃⌄</span>
+        </div>
+        <div class="nav">${nav.map(([id,label,g]) =>
+          `<div class="${id===activeNav?"on":""}"><span class="g">${g}</span>${label}</div>`).join("")}</div>
+      </div>
+      <div>
+        <div class="nav" style="margin:0">
+          <div><span class="g">⚙</span>Settings</div>
+          <div><span class="g">?</span>Get help</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding-top:10px;margin-top:10px;border-top:1px solid var(--border)">
+          <div class="av" style="background:${userBg}">${user.split(" ").map(w=>w[0]).join("")}</div>
+          <div style="min-width:0"><div style="font-size:12px">${esc(user)}</div><div class="sub faint" style="font-size:11px">${esc(userSub)}</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:10px"><span class="faint">▥</span><span class="title">${esc(titles[key])}</span></div>
+        <div class="search">⌕&nbsp;&nbsp;Search</div>
+      </div>
+      <div class="body">${inner}</div>
+    </div>
+  </div>`;
+}
+
+function operatorList() {
+  const menu = state.menu ? `<div class="menu">${CASES.map(c =>
+    `<div onclick="pickPlaybook('${c.id}')">${dot(c.hue)}${esc(c.playbook)}</div>`).join("")}</div>` : "";
+  return `
+  <div class="rowbar">
+    <div class="tabs"><span class="on">Overview</span><span>Archived</span></div>
+    <div style="display:flex;align-items:center;gap:8px;position:relative">
+      <span class="btn">Export</span>
+      <span class="btn primary" onclick="toggleMenu()">New Mass update <span style="opacity:.85">⌄</span></span>
+      ${menu}
+    </div>
+  </div>
+  ${kpis([{l:"In review with ABC",v:"3",h:"blue"},{l:"Needs your input",v:"1",h:"orange"},
+          {l:"Completed this week",v:"3",h:"green"},{l:"Avg turnaround",v:"2–4 hrs",h:"purple"}])}
+  ${filters("Filter mass updates...",["Mass update list","Status","Location"])}
+  <div class="card"><div class="scroll"><table>
+    <thead><tr><th style="width:34px"><input type="checkbox" disabled></th>
+    ${"["Change","Status","Mass update list","Location","Request","Submitted","Members"].map(h=>`<th>${h}</th>`).join("")}
+    <th style="width:34px"></th></tr></thead>
+    <tbody>${LIST_ROWS.map(r=>`<tr>
+      <td><input type="checkbox" disabled></td>
+      <td class="link" onclick="openChange('${r.caseId}')">${r.change}</td>
+      <td>${badge(r.status)}</td>
+      <td>${dot(r.hue)} ${esc(r.playbook)}</td>
+      <td class="muted">${esc(r.location)}</td>
+      <td class="faint">${r.dcr}</td>
+      <td>${r.submitted}</td>
+      <td class="strong">${r.members}</td>
+      <td class="faint">⋯</td></tr>`).join("")}</tbody></table></div>
+    ${foot(0, LIST_ROWS.length)}</div>`;
+}
+
+function operatorDescribe() {
+  const c = cur();
+  return `
+  <div class="rowbar">
+    <div class="tabs"><span class="on">1. Describe</span><span>2. Preview</span><span>3. Submit</span></div>
+    <div style="display:flex;gap:8px"><span class="btn" onclick="go('op','list')">Cancel</span>
+    <span class="btn primary" onclick="go('op','preview')">Continue</span></div>
+  </div>
+  <div class="grid2">
+    <div class="card pad">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <b style="font-size:13px">What do you need changed?</b><span class="note">from ${c.dcr}</span>
+      </div>
+      <div class="quote" style="border-left-color:${HUE[c.hue]}">${esc(c.request)}</div>
+      <div style="display:flex;gap:8px;margin-top:10px"><span class="chip">＋ Attach a list</span><span class="chip">＋ Note for ABC</span></div>
+    </div>
+    <div class="card pad" style="border-top:2px solid var(--green)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <b style="font-size:13px">Detected details</b>${badge("AI draft")}
+      </div>
+      <div class="stack">${c.details.map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("")}</div>
+    </div>
+  </div>`;
+}
+
+function operatorPreview() {
+  const c = cur();
+  return `
+  <div class="rowbar">
+    <div class="tabs"><span>1. Describe</span><span class="on">2. Preview</span><span>3. Submit</span></div>
+    <div style="display:flex;gap:8px"><span class="btn" onclick="go('op','new')">Back</span>
+    <span class="btn primary" onclick="go('op','track')">Send to ABC</span></div>
+  </div>
+  ${kpis(c.kpis)}
+  ${filters("Filter members...",["Result","Status"])}
+  <div class="card"><div class="scroll"><table>
+    <thead><tr><th style="width:34px"><input type="checkbox" disabled></th>
+    ${c.columns.map(h=>`<th>${esc(h)}</th>`).join("")}<th style="width:34px"></th></tr></thead>
+    <tbody>${c.rows.map(r=>`<tr>
+      <td><input type="checkbox" disabled></td>
+      <td class="strong">${esc(r[0])}</td><td>${esc(r[1])}</td><td class="muted">${esc(r[2])}</td>
+      <td>${badge(r[3])}</td><td class="muted">${esc(r[4])}</td><td class="faint">⋯</td></tr>`).join("")}
+    </tbody></table></div>${foot(0, c.kpis[0].v)}</div>`;
+}
+
+function operatorTrack() {
+  const c = cur(), status = c.autoCleared ? "Completed" : "In Review";
+  return `
+  <div class="rowbar">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b style="font-size:15px">${c.changeId}</b>${badge(status)}
+      <span class="muted" style="font-size:12px">${dot(c.hue)} ${esc(c.playbook)}</span>
+      <span class="faint" style="font-size:12px">${c.dcr}</span>
+    </div>
+    <div style="display:flex;gap:8px"><span class="btn" onclick="go('op','list')">Back</span><span class="btn">Withdraw</span></div>
+  </div>
+  ${kpis([{l:"Members affected",v:c.members,h:"blue"},{l:c.kpis[3].l,v:c.kpis[3].v,h:"purple"},
+          {l:"Operation",v:c.operationNo,h:"gray"},
+          {l:c.autoCleared?"Time to complete":"Waiting on ABC",v:c.autoCleared?"38 min":"12 min",h:c.autoCleared?"green":"orange"}])}
+  <div class="grid2">
+    <div class="card"><div class="ch"><b>Progress</b></div><table><tbody>
+      ${c.progress.map(r=>`<tr><td style="width:130px" class="strong">${esc(r[0])}</td>
+      <td style="width:110px">${badge(r[1])}</td><td class="muted">${esc(r[2])}</td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="card pad" style="border-top:2px solid var(--cyan)">
+      <b style="font-size:13px">Actions</b>
+      <div class="stack" style="margin-top:10px">
+        <span class="chip">Withdraw mass update</span><span class="chip">New mass update for the excluded</span><span class="chip">Export member list</span>
+      </div>
+      <div class="note" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-soft)">Approval and execution stay with ABC.</div>
+    </div>
+  </div>`;
+}
+
+function abcQueue() {
+  const c = cur();
+  const queued = CASES.filter(x=>!x.autoCleared), cleared = CASES.filter(x=>x.autoCleared);
+  return `
+  <div class="rowbar">
+    <div class="tabs"><span class="on">Awaiting approval</span><span>Auto-cleared</span><span>All operations</span></div>
+    <span class="chip">⇅ View</span>
+  </div>
+  ${kpis([{l:"Awaiting approval",v:String(queued.length),h:"orange"},{l:"Auto-cleared today",v:String(cleared.length),h:"green"},
+          {l:"Oldest in queue",v:"12 min",h:"blue"},{l:"Members this week",v:"12,442",h:"purple"}])}
+  ${filters("Filter operations...",["Mass update list","Risk","Location"])}
+  <div class="card"><div class="scroll"><table>
+    <thead><tr><th style="width:34px"><input type="checkbox" disabled></th>
+    ${"["Operation","Mass update list","Location","Members","Why it is here","Request"].map(h=>`<th>${h}</th>`).join("")}
+    <th style="width:34px"></th></tr></thead>
+    <tbody>${queued.map(x=>`<tr class="${x.id===c.id?"sel":""}">
+      <td><input type="checkbox" disabled></td>
+      <td class="link" onclick="openReview('${x.id}')">${x.operationNo}</td>
+      <td>${dot(x.hue)} ${esc(x.playbook)}</td>
+      <td class="muted">${esc(x.club)} · ${esc(x.clubNo)}</td>
+      <td class="strong">${x.members}</td>
+      <td class="muted">${esc(x.queueReason)}</td>
+      <td class="faint">${x.dcr}</td><td class="faint">⋯</td></tr>`).join("")}
+    </tbody></table></div>
+    <div style="padding:10px 12px 0"><span class="note">Cleared automatically — visible, not queued</span></div>
+    <table><tbody>${cleared.map(x=>`<tr>
+      <td style="width:34px"></td>
+      <td class="link" onclick="openReview('${x.id}')">${x.operationNo}</td>
+      <td>${dot(x.hue)} ${esc(x.playbook)}</td>
+      <td class="muted">${esc(x.club)} · ${esc(x.clubNo)}</td>
+      <td class="strong">${x.members}</td>
+      <td>${badge("Auto-cleared")}</td>
+      <td class="faint">${x.dcr}</td><td class="faint">⋯</td></tr>`).join("")}</tbody></table>
+    ${foot(0, CASES.length)}</div>`;
+}
+
+function abcReview() {
+  const c = cur();
+  const actions = c.autoCleared
+    ? `<span class="btn" onclick="go('abc','results')">View results</span>`
+    : `<span class="btn">Send back</span><span class="btn danger">Reject</span>
+       <span class="btn primary" onclick="go('abc','results')">Approve and run</span>`;
+  return `
+  <div class="rowbar">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b style="font-size:15px">${c.operationNo}</b>
+      ${badge(c.autoCleared ? "Auto-cleared" : "Awaiting approval")}
+      <span class="muted" style="font-size:12px">${dot(c.hue)} ${esc(c.operation)}</span>
+      <span class="faint" style="font-size:12px">${c.changeId} · ${c.dcr}</span>
+    </div>
+    <div style="display:flex;gap:8px"><span class="btn" onclick="go('abc','queue')">Back</span>${actions}</div>
+  </div>
+  ${kpis(c.kpis)}
+  <div class="grid2">
+    <div class="card pad" style="border-top:2px solid var(--blue)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <b style="font-size:13px">What you are approving</b>${badge("AI summary")}
+      </div>
+      <div style="font-size:13px;line-height:20px">${esc(c.summary)}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-soft)">
+        <span class="chip">View all ${c.members} items</span><span class="chip">View exclusions</span><span class="chip">Open ${c.dcr}</span>
+      </div>
+    </div>
+    <div class="card"><div class="ch"><b>Checks</b></div><table><tbody>
+      ${c.checks.map(r=>`<tr><td style="width:150px" class="muted">${esc(r[0])}</td><td class="wrap-cell">${esc(r[1])}</td></tr>`).join("")}
+    </tbody></table></div>
+  </div>
+  <div class="card"><div class="ch"><b>Sample of the items</b></div><div class="scroll"><table>
+    <thead><tr>${c.columns.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead>
+    <tbody>${c.rows.map(r=>`<tr><td class="strong">${esc(r[0])}</td><td>${esc(r[1])}</td>
+      <td class="muted">${esc(r[2])}</td><td>${badge(r[3])}</td><td class="muted">${esc(r[4])}</td></tr>`).join("")}
+    </tbody></table></div></div>`;
+}
+
+function abcResults() {
+  const c = cur();
+  const exceptions = c.failures.length
+    ? `<table><tbody>${c.failures.map(r=>`<tr><td style="width:90px" class="strong">${esc(r[0])}</td>
+        <td class="muted wrap-cell">${esc(r[1])}</td></tr>`).join("")}
+        <tr><td class="faint" colspan="2">Retry drafted for the operator, re-validated first.</td></tr></tbody></table>`
+    : `<div style="padding:14px;font-size:13px;color:var(--green)">Every row succeeded. Nothing to work.</div>`;
+  return `
+  <div class="rowbar">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b style="font-size:15px">${c.operationNo}</b>
+      ${badge(c.failures.length ? "Partial Success" : "Completed")}
+      <span class="muted" style="font-size:12px">${dot(c.hue)} ${esc(c.playbook)}</span>
+    </div>
+    <div style="display:flex;gap:8px"><span class="btn" onclick="go('abc','queue')">Back to queue</span><span class="btn">Export results</span></div>
+  </div>
+  ${kpis(c.resultKpis)}
+  <div class="grid11">
+    <div class="card"><div class="ch"><b>Execution</b></div><table><tbody>
+      ${c.runPhases.map(r=>`<tr><td style="width:120px" class="strong">${esc(r[0])}</td>
+      <td style="width:90px">${badge(r[1])}</td><td class="muted">${esc(r[2])}</td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="card"><div class="ch"><b>Exceptions</b>${c.failures.length?badge("AI grouped"):""}</div>${exceptions}</div>
+  </div>`;
+}
+
+function render() {
+  const isOp = state.persona === "operator";
+  document.body.classList.toggle("exp-operator", isOp);
+  document.body.classList.toggle("exp-abc", !isOp);
+  document.body.classList.toggle("tour-on", tourIndex >= 0);
+  document.getElementById("persona").innerHTML =
+    [["operator","Operator"],["abc","ABC Billing Ops"]].map(([id,l]) =>
+      `<span id="persona-${id}" class="${state.persona===id?"on":""}" onclick="setPersona('${id}')">${l}</span>`).join("");
+  document.getElementById("cases").innerHTML = CASES.map(c => {
+    const on = c.id === state.caseId;
+    return `<span class="pill ${on?"on":""}" style="${on?`border-color:${HUE[c.hue]};color:${HUE[c.hue]};background:${TINT[c.hue]}`:""}"
+      onclick="setCase('${c.id}')">${dot(c.hue)}${esc(c.playbook)} · ${c.dcr}</span>`;
+  }).join("");
+  const screens = isOp ? OP_SCREENS : ABC_SCREENS, active = isOp ? state.op : state.abc;
+  document.getElementById("screens").innerHTML = screens.map(([id,l]) => {
+    const on = id === active;
+    return `<span class="pill ${on?"on":""}" style="${on?"border-color:var(--accent);color:var(--accent);background:#eef2ff":""}"
+      onclick="go('${isOp?"op":"abc"}','${id}')">${l}</span>`;
+  }).join("");
+  let inner;
+  if (isOp) inner = state.op==="list"?operatorList():state.op==="new"?operatorDescribe():state.op==="preview"?operatorPreview():operatorTrack();
+  else inner = state.abc==="queue"?abcQueue():state.abc==="review"?abcReview():abcResults();
+  document.getElementById("app").innerHTML = shell(inner);
+  if (tourIndex >= 0) setTimeout(renderTour, 0);
+}
+function setPersona(p){ state.persona=p; state.menu=false; render(); }
+function setCase(id){ state.caseId=id; state.menu=false; render(); }
+function go(side,screen){ state[side]=screen; state.menu=false; render(); }
+function toggleMenu(){ state.menu=!state.menu; render(); }
+function pickPlaybook(id){ state.caseId=id; state.menu=false; state.op="new"; render(); }
+function openChange(id){ state.caseId=id; state.op="track"; render(); }
+function openReview(id){ state.caseId=id; state.abc="review"; render(); }
+function applyTourState(step) {
+  Object.assign(state, step.state || {});
+  state.caseId = "cancel";
+  if (!("menu" in (step.state || {}))) state.menu = false;
+}
+function startTour(){ tourIndex=0; applyTourState(TOUR[0]); render(); }
+function moveTour(n){
+  const next = tourIndex + n;
+  if (next < 0) return;
+  if (next >= TOUR.length){ endTour(); return; }
+  tourIndex=next; applyTourState(TOUR[tourIndex]); render();
+}
+function endTour(){
+  document.querySelectorAll(".tour-target").forEach(el=>el.classList.remove("tour-target"));
+  tourIndex=-1; document.body.classList.remove("tour-on"); document.getElementById("tour").innerHTML="";
+}
+function tourKicker(step){
+  if (tourIndex===0) return "AI Mass Updates vision";
+  if (tourIndex===TOUR.length-1) return "The opportunity";
+  return (step.state && step.state.persona==="abc") ? "Billing ex walkthrough" : "Operator ex walkthrough";
+}
+function renderTour(){
+  if (tourIndex < 0) return;
+  document.querySelectorAll(".tour-target").forEach(el=>el.classList.remove("tour-target"));
+  const step=TOUR[tourIndex], target=step.selector ? document.querySelector(step.selector) : null;
+  const personaTab=document.getElementById(state.persona==="abc"?"persona-abc":"persona-operator");
+  if (personaTab) personaTab.classList.add("tour-target");
+  if (target) {
+    target.classList.add("tour-target");
+    target.scrollIntoView({behavior:"smooth",block:"center"});
+  }
+  const boxes = step.boxes ? `<div class="tour-now">${step.boxes.map(x=>`<div><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div>`).join("")}</div>` : "";
+  const ai = step.ai ? `<div class="tour-ai"><b>Where AI is used</b><span>${esc(step.ai)}</span></div>` : "";
+  document.getElementById("tour").innerHTML = `<div class="tour-shade"></div>
+    <section class="tour-panel">
+      <div class="tour-progress"><span style="width:${((tourIndex+1)/TOUR.length)*100}%"></span></div>
+      <div class="tour-content"><div class="tour-kicker">${tourKicker(step)}</div>
+        <h2>${esc(step.title)}</h2><p>${esc(step.text)}</p>${boxes}${ai}</div>
+      <div class="tour-actions"><span class="count">${tourIndex+1} of ${TOUR.length}</span>
+        <button onclick="endTour()">Exit</button>${tourIndex?`<button onclick="moveTour(-1)">Back</button>`:""}
+        <button class="next" onclick="moveTour(1)">${tourIndex===TOUR.length-1?"Finish":"Next"}</button></div>
+    </section>`;
+}
+render();
+</script>
 </body>
 </html>
