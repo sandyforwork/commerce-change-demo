@@ -445,7 +445,7 @@ const LIST_ROWS = [
 ];
 
 const OP_NAV = [["home","Home","⌂"],["deposits","Deposits","▤"],["refunds","Refunds","↩"],["cancellations","Cancellations","⊘"],["changes","Mass Updates","⇄"]];
-const ABC_NAV = [["home","Home","⌂"],["approvals","Approvals","✓"],["operations","Operations","⇄"],["playbooks","Mass update list","▤"],["audit","Audit","◭"]];
+const ABC_NAV = [["home","Home","⌂"],["approvals","Approvals","✓"],["operations","Operations","⇄"],["playbooks","Mass update list","▤"],["audit","Audit","◬"]];
 
 const OP_SCREENS = [["list","Mass Updates list"],["new","Describe"],["preview","Preview"],["track","Mass update detail"]];
 const ABC_SCREENS = [["queue","Approval queue"],["review","Review & decide"],["results","Execution & results"]];
@@ -585,7 +585,7 @@ function shell(inner) {
     </div>
     <div class="main">
       <div class="topbar">
-        <div style="display:flex;align-items:center;gap:10px"><span class="faint">▥</span><span class="title">${esc(titles[key])}</span></div>
+        <div style="display:flex;align-items:center;gap:10px"><span class="faint">⊛</span><span class="title">${esc(titles[key])}</span></div>
         <div class="search">⌕&nbsp;&nbsp;Search</div>
       </div>
       <div class="body">${inner}</div>
@@ -610,7 +610,7 @@ function operatorList() {
   ${filters("Filter mass updates...",["Mass update list","Status","Location"])}
   <div class="card"><div class="scroll"><table>
     <thead><tr><th style="width:34px"><input type="checkbox" disabled></th>
-    ${"["Change","Status","Mass update list","Location","Request","Submitted","Members"].map(h=>`<th>${h}</th>`).join("")}
+    ${["Change","Status","Mass update list","Location","Request","Submitted","Members"].map(h=>`<th>${h}</th>`).join("")}
     <th style="width:34px"></th></tr></thead>
     <tbody>${LIST_ROWS.map(r=>`<tr>
       <td><input type="checkbox" disabled></td>
@@ -712,7 +712,7 @@ function abcQueue() {
   ${filters("Filter operations...",["Mass update list","Risk","Location"])}
   <div class="card"><div class="scroll"><table>
     <thead><tr><th style="width:34px"><input type="checkbox" disabled></th>
-    ${"["Operation","Mass update list","Location","Members","Why it is here","Request"].map(h=>`<th>${h}</th>`).join("")}
+    ${["Operation","Mass update list","Location","Members","Why it is here","Request"].map(h=>`<th>${h}</th>`).join("")}
     <th style="width:34px"></th></tr></thead>
     <tbody>${queued.map(x=>`<tr class="${x.id===c.id?"sel":""}">
       <td><input type="checkbox" disabled></td>
