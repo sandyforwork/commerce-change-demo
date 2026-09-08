@@ -1,4 +1,4 @@
 <!doctype html>
-<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Commerce Change — end to end</title></head><body><p style="font-family:sans-serif;padding:24px;color:#656c76">Loading Commerce Change…</p><script>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>AI Mass Updates — end to end</title></head><body><p style="font-family:sans-serif;padding:24px;color:#656c76">Loading AI Mass Updates…</p><script>
 Promise.all([1,2,3,4,5,6].map(i=>fetch('tour-'+i+'.txt').then(r=>{if(!r.ok)throw Error('Missing walkthrough '+i);return r.text()}))).then(async parts=>{const b64=parts.join('').replace(/\s+/g,'');const bin=Uint8Array.from(atob(b64),c=>c.charCodeAt(0));const stream=new Blob([bin]).stream().pipeThrough(new DecompressionStream('gzip'));const html=await new Response(stream).text();document.open();document.write(html);document.close()}).catch(e=>document.body.textContent='Could not load the demo: '+e);
 </script></body></html>
