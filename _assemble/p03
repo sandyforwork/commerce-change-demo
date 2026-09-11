@@ -1,0 +1,259 @@
+      <td class="faint">⋯</td></tr>`).join("")}</tbody></table></div>
+    ${foot(0, LIST_ROWS.length)}</div>`;
+}
+
+function operatorDescribe() {
+  const c = cur();
+  return `
+  <div class="rowbar">
+    <div class="tabs"><span class="on">1. Describe</span><span>2. Preview</span><span>3. Submit</span></div>
+    <div style="display:flex;gap:8px"><span class="btn" onclick="go('op','list')">Cancel</span>
+    <span class="btn primary" onclick="go('op','preview')">Continue</span></div>
+  </div>
+  <div class="grid2">
+    <div class="card pad">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <b style="font-size:13px">What do you need changed?</b><span class="note">from ${c.dcr}</span>
+      </div>
+      <div class="quote" style="border-left-color:${HUE[c.hue]}">${esc(c.request)}</div>
+      <div style="display:flex;gap:8px;margin-top:10px"><span class="chip">＋ Attach a list</span><span class="chip">＋ Note for ABC</span></div>
+    </div>
+    <div class="card pad" style="border-top:2px solid var(--green)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <b style="font-size:13px">Detected details</b>${badge("AI draft")}
+      </div>
+      <div class="stack">${c.details.map(([k,v])=>`<div class="kv"><span>${esc(k)}</span><span>${esc(v)}</span></div>`).join("")}</div>
+    </div>
+  </div>`;
+}
+
+function operatorPreview() {
+  const c = cur();
+  return `
+  <div class="rowbar">
+    <div class="tabs"><span>1. Describe</span><span class="on">2. Preview</span><span>3. Submit</span></div>
+    <div style="display:flex;gap:8px"><span class="btn" onclick="go('op','new')">Back</span>
+    <span class="btn primary" onclick="go('op','track')">Send to ABC</span></div>
+  </div>
+  ${kpis(c.kpis)}
+  ${filters("Filter members...",["Result","Status"])}
+  <div class="card"><div class="scroll"><table>
+    <thead><tr><th style="width:34px"><input type="checkbox" disabled></th>
+    ${c.columns.map(h=>`<th>${esc(h)}</th>`).join("")}<th style="width:34px"></th></tr></thead>
+    <tbody>${c.rows.map(r=>`<tr>
+      <td><input type="checkbox" disabled></td>
+      <td class="strong">${esc(r[0])}</td><td>${esc(r[1])}</td><td class="muted">${esc(r[2])}</td>
+      <td>${badge(r[3])}</td><td class="muted">${esc(r[4])}</td><td class="faint">⋯</td></tr>`).join("")}
+    </tbody></table></div>${foot(0, c.kpis[0].v)}</div>`;
+}
+
+function operatorTrack() {
+  const c = cur(), status = c.autoCleared ? "Completed" : "In Review";
+  return `
+  <div class="rowbar">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b style="font-size:15px">${c.changeId}</b>${badge(status)}
+      <span class="muted" style="font-size:12px">${dot(c.hue)} ${esc(c.playbook)}</span>
+      <span class="faint" style="font-size:12px">${c.dcr}</span>
+    </div>
+    <div style="display:flex;gap:8px"><span class="btn" onclick="go('op','list')">Back</span><span class="btn">Withdraw</span></div>
+  </div>
+  ${kpis([{l:"Members affected",v:c.members,h:"blue"},{l:c.kpis[3].l,v:c.kpis[3].v,h:"purple"},
+          {l:"Operation",v:c.operationNo,h:"gray"},
+          {l:c.autoCleared?"Time to complete":"Waiting on ABC",v:c.autoCleared?"38 min":"12 min",h:c.autoCleared?"green":"orange"}])}
+  <div class="grid2">
+    <div class="card"><div class="ch"><b>Progress</b></div><table><tbody>
+      ${c.progress.map(r=>`<tr><td style="width:130px" class="strong">${esc(r[0])}</td>
+      <td style="width:110px">${badge(r[1])}</td><td class="muted">${esc(r[2])}</td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="card pad" style="border-top:2px solid var(--cyan)">
+      <b style="font-size:13px">Actions</b>
+      <div class="stack" style="margin-top:10px">
+        <span class="chip">Withdraw mass update</span><span class="chip">New mass update for the excluded</span><span class="chip">Export member list</span>
+      </div>
+      <div class="note" style="margin-top:12px;padding-top:12px;border-top:1px solid var(--border-soft)">Approval and execution stay with ABC.</div>
+    </div>
+  </div>`;
+}
+
+function abcQueue() {
+  const c = cur();
+  const queued = CASES.filter(x=>!x.autoCleared), cleared = CASES.filter(x=>x.autoCleared);
+  return `
+  <div class="rowbar">
+    <div class="tabs"><span class="on">Awaiting approval</span><span>Auto-cleared</span><span>All operations</span></div>
+    <span class="chip">⇅ View</span>
+  </div>
+  ${kpis([{l:"Awaiting approval",v:String(queued.length),h:"orange"},{l:"Auto-cleared today",v:String(cleared.length),h:"green"},
+          {l:"Oldest in queue",v:"12 min",h:"blue"},{l:"Members this week",v:"12,442",h:"purple"}])}
+  ${filters("Filter operations...",["Mass update list","Risk","Location"])}
+  <div class="card"><div class="scroll"><table>
+    <thead><tr><th style="width:34px"><input type="checkbox" disabled></th>
+    ${["Operation","Mass update list","Location","Members","Why it is here","Request"].map(h=>`<th>${h}</th>`).join("")}
+    <th style="width:34px"></th></tr></thead>
+    <tbody>${queued.map(x=>`<tr class="${x.id===c.id?"sel":""}">
+      <td><input type="checkbox" disabled></td>
+      <td class="link" onclick="openReview('${x.id}')">${x.operationNo}</td>
+      <td>${dot(x.hue)} ${esc(x.playbook)}</td>
+      <td class="muted">${esc(x.club)} · ${esc(x.clubNo)}</td>
+      <td class="strong">${x.members}</td>
+      <td class="muted">${esc(x.queueReason)}</td>
+      <td class="faint">${x.dcr}</td><td class="faint">⋯</td></tr>`).join("")}
+    </tbody></table></div>
+    <div style="padding:10px 12px 0"><span class="note">Cleared automatically — visible, not queued</span></div>
+    <table><tbody>${cleared.map(x=>`<tr>
+      <td style="width:34px"></td>
+      <td class="link" onclick="openReview('${x.id}')">${x.operationNo}</td>
+      <td>${dot(x.hue)} ${esc(x.playbook)}</td>
+      <td class="muted">${esc(x.club)} · ${esc(x.clubNo)}</td>
+      <td class="strong">${x.members}</td>
+      <td>${badge("Auto-cleared")}</td>
+      <td class="faint">${x.dcr}</td><td class="faint">⋯</td></tr>`).join("")}</tbody></table>
+    ${foot(0, CASES.length)}</div>`;
+}
+
+function abcReview() {
+  const c = cur();
+  const actions = c.autoCleared
+    ? `<span class="btn" onclick="go('abc','results')">View results</span>`
+    : `<span class="btn">Send back</span><span class="btn danger">Reject</span>
+       <span class="btn primary" onclick="go('abc','results')">Approve and run</span>`;
+  return `
+  <div class="rowbar">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b style="font-size:15px">${c.operationNo}</b>
+      ${badge(c.autoCleared ? "Auto-cleared" : "Awaiting approval")}
+      <span class="muted" style="font-size:12px">${dot(c.hue)} ${esc(c.operation)}</span>
+      <span class="faint" style="font-size:12px">${c.changeId} · ${c.dcr}</span>
+    </div>
+    <div style="display:flex;gap:8px"><span class="btn" onclick="go('abc','queue')">Back</span>${actions}</div>
+  </div>
+  ${kpis(c.kpis)}
+  <div class="grid2">
+    <div class="card pad" style="border-top:2px solid var(--blue)">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <b style="font-size:13px">What you are approving</b>${badge("AI summary")}
+      </div>
+      <div style="font-size:13px;line-height:20px">${esc(c.summary)}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;padding-top:12px;border-top:1px solid var(--border-soft)">
+        <span class="chip">View all ${c.members} items</span><span class="chip">View exclusions</span><span class="chip">Open ${c.dcr}</span>
+      </div>
+    </div>
+    <div class="card"><div class="ch"><b>Checks</b></div><table><tbody>
+      ${c.checks.map(r=>`<tr><td style="width:150px" class="muted">${esc(r[0])}</td><td class="wrap-cell">${esc(r[1])}</td></tr>`).join("")}
+    </tbody></table></div>
+  </div>
+  <div class="card"><div class="ch"><b>Sample of the items</b></div><div class="scroll"><table>
+    <thead><tr>${c.columns.map(h=>`<th>${esc(h)}</th>`).join("")}</tr></thead>
+    <tbody>${c.rows.map(r=>`<tr><td class="strong">${esc(r[0])}</td><td>${esc(r[1])}</td>
+      <td class="muted">${esc(r[2])}</td><td>${badge(r[3])}</td><td class="muted">${esc(r[4])}</td></tr>`).join("")}
+    </tbody></table></div></div>`;
+}
+
+function abcResults() {
+  const c = cur();
+  const exceptions = c.failures.length
+    ? `<table><tbody>${c.failures.map(r=>`<tr><td style="width:90px" class="strong">${esc(r[0])}</td>
+        <td class="muted wrap-cell">${esc(r[1])}</td></tr>`).join("")}
+        <tr><td class="faint" colspan="2">Retry drafted for the operator, re-validated first.</td></tr></tbody></table>`
+    : `<div style="padding:14px;font-size:13px;color:var(--green)">Every row succeeded. Nothing to work.</div>`;
+  return `
+  <div class="rowbar">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <b style="font-size:15px">${c.operationNo}</b>
+      ${badge(c.failures.length ? "Partial Success" : "Completed")}
+      <span class="muted" style="font-size:12px">${dot(c.hue)} ${esc(c.playbook)}</span>
+    </div>
+    <div style="display:flex;gap:8px"><span class="btn" onclick="go('abc','queue')">Back to queue</span><span class="btn">Export results</span></div>
+  </div>
+  ${kpis(c.resultKpis)}
+  <div class="grid11">
+    <div class="card"><div class="ch"><b>Execution</b></div><table><tbody>
+      ${c.runPhases.map(r=>`<tr><td style="width:120px" class="strong">${esc(r[0])}</td>
+      <td style="width:90px">${badge(r[1])}</td><td class="muted">${esc(r[2])}</td></tr>`).join("")}
+    </tbody></table></div>
+    <div class="card"><div class="ch"><b>Exceptions</b>${c.failures.length?badge("AI grouped"):""}</div>${exceptions}</div>
+  </div>`;
+}
+
+function render() {
+  const isOp = state.persona === "operator";
+  document.body.classList.toggle("exp-operator", isOp);
+  document.body.classList.toggle("exp-abc", !isOp);
+  document.body.classList.toggle("tour-on", tourIndex >= 0);
+  document.getElementById("persona").innerHTML =
+    [["operator","Operator"],["abc","ABC Billing Ops"]].map(([id,l]) =>
+      `<span id="persona-${id}" class="${state.persona===id?"on":""}" onclick="setPersona('${id}')">${l}</span>`).join("");
+  document.getElementById("cases").innerHTML = CASES.map(c => {
+    const on = c.id === state.caseId;
+    return `<span class="pill ${on?"on":""}" style="${on?`border-color:${HUE[c.hue]};color:${HUE[c.hue]};background:${TINT[c.hue]}`:""}"
+      onclick="setCase('${c.id}')">${dot(c.hue)}${esc(c.playbook)} · ${c.dcr}</span>`;
+  }).join("");
+  const screens = isOp ? OP_SCREENS : ABC_SCREENS, active = isOp ? state.op : state.abc;
+  document.getElementById("screens").innerHTML = screens.map(([id,l]) => {
+    const on = id === active;
+    return `<span class="pill ${on?"on":""}" style="${on?"border-color:var(--accent);color:var(--accent);background:#eef2ff":""}"
+      onclick="go('${isOp?"op":"abc"}','${id}')">${l}</span>`;
+  }).join("");
+  let inner;
+  if (isOp) inner = state.op==="list"?operatorList():state.op==="new"?operatorDescribe():state.op==="preview"?operatorPreview():operatorTrack();
+  else inner = state.abc==="queue"?abcQueue():state.abc==="review"?abcReview():abcResults();
+  document.getElementById("app").innerHTML = shell(inner);
+  if (tourIndex >= 0) setTimeout(renderTour, 0);
+}
+function setPersona(p){ state.persona=p; state.menu=false; render(); }
+function setCase(id){ state.caseId=id; state.menu=false; render(); }
+function go(side,screen){ state[side]=screen; state.menu=false; render(); }
+function toggleMenu(){ state.menu=!state.menu; render(); }
+function pickPlaybook(id){ state.caseId=id; state.menu=false; state.op="new"; render(); }
+function openChange(id){ state.caseId=id; state.op="track"; render(); }
+function openReview(id){ state.caseId=id; state.abc="review"; render(); }
+function applyTourState(step) {
+  Object.assign(state, step.state || {});
+  state.caseId = "cancel";
+  if (!("menu" in (step.state || {}))) state.menu = false;
+}
+function startTour(){ tourIndex=0; applyTourState(TOUR[0]); render(); }
+function moveTour(n){
+  const next = tourIndex + n;
+  if (next < 0) return;
+  if (next >= TOUR.length){ endTour(); return; }
+  tourIndex=next; applyTourState(TOUR[tourIndex]); render();
+}
+function endTour(){
+  document.querySelectorAll(".tour-target").forEach(el=>el.classList.remove("tour-target"));
+  tourIndex=-1; document.body.classList.remove("tour-on"); document.getElementById("tour").innerHTML="";
+}
+function tourKicker(step){
+  if (tourIndex===0) return "AI Mass Updates vision";
+  if (tourIndex===TOUR.length-1) return "The opportunity";
+  return (step.state && step.state.persona==="abc") ? "Billing exp walkthrough" : "Operator exp walkthrough";
+}
+function renderTour(){
+  if (tourIndex < 0) return;
+  document.querySelectorAll(".tour-target").forEach(el=>el.classList.remove("tour-target"));
+  const step=TOUR[tourIndex], target=step.selector ? document.querySelector(step.selector) : null;
+  const personaTab=document.getElementById(state.persona==="abc"?"persona-abc":"persona-operator");
+  if (personaTab) personaTab.classList.add("tour-target");
+  if (target) {
+    target.classList.add("tour-target");
+    target.scrollIntoView({behavior:"smooth",block:"center"});
+  }
+  const boxes = step.boxes ? `<div class="tour-now">${step.boxes.map(x=>`<div><b>${esc(x[0])}</b><span>${esc(x[1])}</span></div>`).join("")}</div>` : "";
+  const vs = step.vs ? `<div class="tour-vs"><div class="drop"><b>Eliminates</b>${esc(step.vs.drop)}</div><div class="gain"><b>Adds</b>${esc(step.vs.add)}</div></div>` : "";
+  const be = step.be ? `<div class="tour-be"><b>APIs this step uses</b>${step.be.map(([k,api,why])=>`<div class="row"><span class="tag ${k}">${k==="exist"?"Exists":"Build"}</span><div><div class="api">${esc(api)}</div>${why?`<div class="why">${esc(why)}</div>`:""}</div></div>`).join("")}</div>` : "";
+  const ai = step.ai ? `<div class="tour-ai"><b>Where AI is used</b><span>${esc(step.ai)}</span></div>` : "";
+  document.getElementById("tour").innerHTML = `<div class="tour-shade"></div>
+    <section class="tour-panel">
+      <div class="tour-progress"><span style="width:${((tourIndex+1)/TOUR.length)*100}%"></span></div>
+      <div class="tour-content"><div class="tour-kicker">${tourKicker(step)}</div>
+        <h2>${esc(step.title)}</h2><p>${esc(step.text)}</p>${boxes}${vs}${ai}${be}</div>
+      <div class="tour-actions"><span class="count">${tourIndex+1} of ${TOUR.length}</span>
+        <button onclick="endTour()">Exit</button>${tourIndex?`<button onclick="moveTour(-1)">Back</button>`:""}
+        <button class="next" onclick="moveTour(1)">${tourIndex===TOUR.length-1?"Finish":"Next"}</button></div>
+    </section>`;
+}
+render();
+</script>
+</body>
+</html>
