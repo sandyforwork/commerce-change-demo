@@ -1,0 +1,29 @@
+name: Assemble full demo
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - "_assemble/**"
+      - ".github/workflows/assemble-demo.yml"
+permissions:
+  contents: write
+jobs:
+  assemble:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Concatenate exact local demo into index.html
+        run: |
+          cat _assemble/p00 _assemble/p01 _assemble/p02 _assemble/p03 > index.html
+          bytes=$(wc -c < index.html)
+          echo "assembled_bytes=$bytes"
+          test "$bytes" -ge 50000
+          grep -F "APIs this step uses" index.html
+          grep -F '${boxes}${vs}${ai}${be}' index.html
+          grep -F "Fitness Fitness" index.html
+          grep -F "New Mass update" index.html
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add index.html
+          git commit -m "Restore full demo; APIs box after Where AI is used"
+          git push
