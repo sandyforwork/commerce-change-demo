@@ -1,0 +1,187 @@
+  "Awaiting approval":"orange", "AI draft":"green", "AI summary":"green", "AI grouped":"green"
+};
+
+const CASES = [
+  {
+    id:"cancel", playbook:"Cancel members", hue:"red", operation:"SUBSCRIPTION_CANCEL",
+    dcr:"DCR-14818", club:"IRON ASYLUM GYM", clubNo:"03208",
+    request:`Please mass cancel all members in Commerce using code CCC.
+Thank you!  03208 IRON ASYLUM GYM
+
+Requested due date: Aug 27, 2026 · One time · Increasing invoices: No`,
+    details:[["Mass update list","Cancel members"],["Location","IRON ASYLUM GYM · 03208"],["Scope","All active members"],
+             ["Cancel code","CCC"],["Effective","Aug 27, 2026"],["Invoices due","None"]],
+    kpis:[{l:"Members found",v:"412",h:"gray"},{l:"Eligible",v:"389",h:"green"},
+          {l:"Excluded",v:"23",h:"orange"},{l:"Invoices stopped",v:"$14,205",h:"blue"}],
+    columns:["Member","Subscription","Status","Result","Reason"],
+    rows:[["941951","Monthly Dues","ACTIVE","Eligible","—"],
+          ["941962","Monthly Dues","FROZEN","Eligible","—"],
+          ["942014","Monthly Dues","PAID_UPFRONT_OPEN","Eligible","—"],
+          ["942101","Monthly Dues","PENDING_CANCELLATION","Excluded","Cancel already pending"],
+          ["942130","Monthly Dues","FROZEN","Excluded","Cancel option booked"],
+          ["942144","Monthly Dues","RFC","Excluded","Status not cancellable"]],
+    changeId:"CHG-1180", operationNo:"MM-2026-0442", members:"389", autoCleared:false,
+    queueReason:"Revenue-reducing · whole location",
+    progress:[["Submitted","Done","389 items · MM-2026-0442"],["Validated","Done","Ready for approval"],
+              ["ABC review","Waiting","Revenue-reducing change"],["Execution","Not started","Runs after approval"],
+              ["Results","Not started","You will be notified"]],
+    summary:"Cancels every active membership at IRON ASYLUM GYM 03208 with code CCC, effective 27 Aug. About $14,205 of remaining invoices stop. 23 members excluded by status rules.",
+    checks:[["Scope","One location, all active members"],["Statuses","ACTIVE / FROZEN / PUF / PUFO only"],
+            ["Cancel code","CCC exists at this club"],["Excluded","23 rows, reasons attached"],
+            ["Requester ≠ approver","Satisfied"]],
+    runPhases:[["Approved","Done","status → PENDING_EXECUTION"],["Batch","Done","389 operation items"],
+               ["Billing","Done","bulk-operation → commit"],["DataTrak","Skipped","Not a DT location"]],
+    resultKpis:[{l:"Cancelled",v:"381",h:"green"},{l:"Failed",v:"8",h:"red"},
+                {l:"Status",v:"PARTIAL",h:"yellow"},{l:"Run time",v:"4 min",h:"gray"}],
+    failures:[["942190","Billing cycle is active. Please retry transfer later."],
+              ["942233","Could not find appropriate subscription"]]
+  },
+  {
+    id:"invoice", playbook:"Zero out invoices", hue:"orange", operation:"INVOICE_ADJUSTMENT",
+    dcr:"DCR-14692", club:"CRUNCH DIVISION", clubNo:"22004",
+    request:`Please zero out all DUES invoices for 8/25/2026-10/31/2026.
+Club 22004 CRUNCH DIVISION will be closed during that time and
+do not want to bill dues invoices.
+
+Profit centre: DUES · Consecutive invoices changed: 2`,
+    details:[["Mass update list","Zero out invoices"],["Location","CRUNCH DIVISION · 22004"],["Profit centre","DUES"],
+             ["Window","Aug 25 – Oct 31, 2026"],["New amount","0.00"],["Due dates","Unchanged"]],
+    kpis:[{l:"Members found",v:"1,842",h:"gray"},{l:"Eligible",v:"1,769",h:"green"},
+          {l:"Excluded",v:"73",h:"orange"},{l:"Dues waived",v:"$61,915",h:"blue"}],
+    columns:["Member","Invoice","State","Result","Reason"],
+    rows:[["310442","Dues · 25 Sep","Unpaid","Eligible","—"],
+          ["310517","Dues · 25 Sep","Unpaid","Eligible","—"],
+          ["310523","Dues · 25 Oct","Unpaid","Eligible","—"],
+          ["310588","Dues · 25 Sep","Paid","Excluded","Needs a refund, not an adjustment"],
+          ["310604","Dues · 25 Sep","Unpaid","Excluded","Adjustment already pending"],
+          ["310661","—","—","Excluded","No dues invoice in window"]],
+    changeId:"CHG-1177", operationNo:"MM-2026-0468", members:"1,769", autoCleared:false,
+    queueReason:"Money leaves the business · $61,915",
+    progress:[["Submitted","Done","1,769 items · MM-2026-0468"],["Validated","Done","Ready for approval"],
+              ["ABC review","Waiting","Finance lane · $61,915"],["Execution","Not started","Runs after approval"],
+              ["Results","Not started","You will be notified"]],
+    summary:"Club 22004 is closed 25 Aug to 31 Oct, so dues invoices in that window go to zero for 1,769 members. About $61,915 is given up. 41 members already paid and need a refund instead.",
+    checks:[["Window","Matches the stated closure dates"],["Change type","Amount only, due dates untouched"],
+            ["Paid invoices","41 routed to refund, not dropped"],["Pending adjustments","28 excluded, one active allowed"],
+            ["Finance","Impact snapshot shared"]],
+    runPhases:[["Approved","Done","status → PENDING_EXECUTION"],["Batch","Done","1,769 operation items"],
+               ["Billing","Done","invoice amounts → 0.00"],["DataTrak","Skipped","Not a DT location"]],
+    resultKpis:[{l:"Adjusted",v:"1,769",h:"green"},{l:"Failed",v:"0",h:"green"},
+                {l:"Status",v:"SUCCESS",h:"green"},{l:"Run time",v:"11 min",h:"gray"}],
+    failures:[]
+  },
+  {
+    id:"price", playbook:"Change price", hue:"purple", operation:"SUBSCRIPTION_PRICE_UPDATE",
+    dcr:"DCR-14792", club:"BFT BLACKBURN", clubNo:"Glofox",
+    request:`BFT Blackburn BPR sweep.
+
+Bulk price raise across Glofox memberships, effective with the
+next billing cycle. Existing discounts stay as they are.`,
+    details:[["Mass update list","Change price"],["Location","BFT BLACKBURN · Glofox"],["Plans","All recurring memberships"],
+             ["Increase","Per plan, from the audit sheet"],["Effective","Next billing cycle"],["Discounts","Preserved"]],
+    kpis:[{l:"Members found",v:"1,204",h:"gray"},{l:"Eligible",v:"1,131",h:"green"},
+          {l:"Excluded",v:"73",h:"orange"},{l:"Monthly increase",v:"+$9,048",h:"green"}],
+    columns:["Member","Plan","Change","Result","Reason"],
+    rows:[["775120","Unlimited","39.99 → 47.99","Eligible","—"],
+          ["775184","Unlimited","39.99 → 47.99","Eligible","—"],
+          ["775206","8 Session","29.99 → 34.99","Eligible","—"],
+          ["775298","Unlimited","—","Excluded","Paid upfront, not supported"],
+          ["775344","8 Session","—","Excluded","Pending cancellation"],
+          ["775401","Unlimited","—","Excluded","No future invoices"]],
+    changeId:"CHG-1178", operationNo:"MM-2026-0463", members:"1,131", autoCleared:false,
+    queueReason:"Price increase · finance lane",
+    progress:[["Submitted","Done","1,131 items · MM-2026-0463"],["Validated","Done","Ready for approval"],
+              ["ABC review","Waiting","Price change · finance lane"],["Execution","Not started","Runs after approval"],
+              ["Results","Not started","You will be notified"]],
+    summary:"Bulk price raise for 1,131 Glofox memberships at BFT Blackburn, adding about $9,048 monthly recurring. Takes effect next billing cycle; no current invoice changes. Discounts preserved.",
+    checks:[["Effective date","Next cycle, nothing retroactive"],["Subtypes","Paid upfront excluded per guide"],
+            ["Discounts","Preserved on all eligible rows"],["Excluded","73 rows, reasons attached"],
+            ["Finance","Impact snapshot shared"]],
+    runPhases:[["Approved","Done","status → PENDING_EXECUTION"],["Batch","Done","1,131 operation items"],
+               ["Billing","Done","future price adjustments written"],["Member comms","Queued","Price notice, 30 days ahead"]],
+    resultKpis:[{l:"Repriced",v:"1,118",h:"green"},{l:"Failed",v:"13",h:"red"},
+                {l:"Status",v:"PARTIAL",h:"yellow"},{l:"Run time",v:"9 min",h:"gray"}],
+    failures:[["775512","Future invoices list cannot be empty. SubscriptionId: …"],
+              ["775560","An error occurred while processing bulk request"]]
+  },
+  {
+    id:"create", playbook:"Create subscription", hue:"cyan", operation:"SUBSCRIPTION_CREATE_V2",
+    dcr:"DCR-14827", club:"LFG", clubNo:"32318–32325",
+    request:`32318 - 32325 - LFG - Mass Update - Subscription Create
+Annual Fees per Annual Fee Audit.
+
+Pre-approved. Add the annual fee subscription to members
+identified in the audit across the eight locations.`,
+    details:[["Mass update list","Create subscription"],["Locations","LFG · 32318–32325"],["Item","Annual Fee"],
+             ["Source","Annual Fee Audit"],["First due date","Per audit sheet"],["Renewal","Annual"]],
+    kpis:[{l:"Members in audit",v:"2,640",h:"gray"},{l:"Eligible",v:"2,588",h:"green"},
+          {l:"Excluded",v:"52",h:"orange"},{l:"Fees added",v:"$126,812",h:"green"}],
+    columns:["Member","Location","Item","Result","Reason"],
+    rows:[["881204","32318","Annual Fee","Eligible","—"],
+          ["881377","32319","Annual Fee","Eligible","—"],
+          ["881490","32322","Annual Fee","Eligible","—"],
+          ["881512","32323","Annual Fee","Excluded","Annual fee already exists"],
+          ["881588","32325","Annual Fee","Excluded","Agreement cancelled"],
+          ["881604","32325","Annual Fee","Excluded","Presale agreement"]],
+    changeId:"CHG-1181", operationNo:"MM-2026-0474", members:"2,588", autoCleared:false,
+    queueReason:"Adds charges to members · 8 locations",
+    progress:[["Submitted","Done","2,588 items · MM-2026-0474"],["Validated","Done","Ready for approval"],
+              ["ABC review","Waiting","Adds charges · finance lane"],["Execution","Not started","Runs after approval"],
+              ["Results","Not started","You will be notified"]],
+    summary:"Annual fee subscriptions added for 2,588 members across eight LFG locations, following the Annual Fee Audit. About $126,812 will bill on the audit's due dates. 52 already have the fee or are not billable.",
+    checks:[["Scope","Eight locations from the audit"],["Duplicates","Members with the fee already excluded"],
+            ["Due dates","From the audit sheet, all future"],["Pre-approval","Attached to the request"],
+            ["Finance","Impact snapshot shared"]],
+    runPhases:[["Approved","Done","status → PENDING_EXECUTION"],["Batch","Done","2,588 operation items"],
+               ["Billing","Done","subscriptions created"],["Member comms","Queued","Annual fee notice"]],
+    resultKpis:[{l:"Created",v:"2,571",h:"green"},{l:"Failed",v:"17",h:"red"},
+                {l:"Status",v:"PARTIAL",h:"yellow"},{l:"Run time",v:"16 min",h:"gray"}],
+    failures:[["881702","Start Date must be less than or equal to First Due Date"],
+              ["881744","Couldn't find target RCM entity"]]
+  },
+  {
+    id:"member", playbook:"Update membership type", hue:"green", operation:"MEMBERSHIP_TYPE_UPDATE",
+    dcr:"DCR-14844", club:"FORMA GYM WALNUT CREEK", clubNo:"005538",
+    request:`Membership Type Mass Update.
+
+Members on the attached list came across with the wrong
+membership type. Set them to Corporate and restore the
+original member-since date.`,
+    details:[["Mass update list","Update membership type"],["Location","FORMA GYM WALNUT CREEK · 005538"],
+             ["Membership type","Corporate"],["Member since","Legacy join date"],
+             ["Billing impact","None"],["Source","Conversion delta"]],
+    kpis:[{l:"Members found",v:"1,204",h:"gray"},{l:"Eligible",v:"1,204",h:"green"},
+          {l:"Excluded",v:"0",h:"green"},{l:"Money moved",v:"$0",h:"green"}],
+    columns:["Member","Type","Member since","Result","Reason"],
+    rows:[["775120","Standard → Corporate","20260314 → 20190314","Eligible","—"],
+          ["775184","Standard → Corporate","20260314 → 20200902","Eligible","—"],
+          ["775206","Standard → Corporate","20260314 → 20171120","Eligible","—"],
+          ["775231","Standard → Corporate","20260314 → 20211004","Eligible","—"]],
+    changeId:"CHG-1176", operationNo:"MM-2026-0470", members:"1,204", autoCleared:true,
+    queueReason:"Demographic only · auto-cleared",
+    progress:[["Submitted","Done","1,204 items · MM-2026-0470"],["Validated","Done","Ready for execution"],
+              ["ABC review","Done","Auto-cleared by policy"],["Execution","Done","1,204 updated"],
+              ["Results","Done","No failures"]],
+    summary:"Conversion clean-up for 1,204 members: membership type set to Corporate and the legacy join date restored. No billing effect. Cleared by policy without a reviewer.",
+    checks:[["Money impact","None, demographic fields only"],["Scope","Conversion delta list only"],
+            ["Excluded","None"],["Policy match","Demographic auto-clear rule"],["Recorded","Actor and snapshot stored"]],
+    runPhases:[["Auto-cleared","Done","Policy engine, no queue"],["Batch","Done","1,204 operation items"],
+               ["Billing","Done","member records updated"],["DataTrak","Skipped","Not a DT location"]],
+    resultKpis:[{l:"Updated",v:"1,204",h:"green"},{l:"Failed",v:"0",h:"green"},
+                {l:"Status",v:"SUCCESS",h:"green"},{l:"Run time",v:"6 min",h:"gray"}],
+    failures:[]
+  }
+];
+
+const LIST_ROWS = [
+  {change:"CHG-1181",status:"In Review",caseId:"create",playbook:"Create subscription",hue:"cyan",location:"LFG · 32318–32325",dcr:"DCR-14827",submitted:"08/27/2026",members:"2,588"},
+  {change:"CHG-1180",status:"In Review",caseId:"cancel",playbook:"Cancel members",hue:"red",location:"IRON ASYLUM GYM · 03208",dcr:"DCR-14818",submitted:"08/27/2026",members:"389"},
+  {change:"CHG-1178",status:"In Review",caseId:"price",playbook:"Change price",hue:"purple",location:"BFT BLACKBURN · Glofox",dcr:"DCR-14792",submitted:"08/26/2026",members:"1,131"},
+  {change:"CHG-1177",status:"Needs Input",caseId:"invoice",playbook:"Zero out invoices",hue:"orange",location:"CRUNCH DIVISION · 22004",dcr:"DCR-14692",submitted:"08/21/2026",members:"1,769"},
+  {change:"CHG-1176",status:"Completed",caseId:"member",playbook:"Update membership type",hue:"green",location:"FORMA GYM WALNUT CREEK · 005538",dcr:"DCR-14844",submitted:"08/28/2026",members:"1,204"},
+  {change:"CHG-1174",status:"Partial Success",caseId:"cancel",playbook:"Cancel members",hue:"red",location:"EOS FITNESS · 40516",dcr:"DCR-14831",submitted:"08/28/2026",members:"4,597"},
+  {change:"CHG-1172",status:"Completed",caseId:"invoice",playbook:"Zero out invoices",hue:"orange",location:"EMERALD CITY ATHLETICS",dcr:"DCR-14817",submitted:"08/27/2026",members:"864"}
+];
+
+const OP_NAV = [["home","Home","⌂"],["deposits","Deposits","▤"],["refunds","Refunds","↩"],["cancellations","Cancellations","⊘"],["changes","Mass Updates","⇄"]];
+const ABC_NAV = [["home","Home","⌂"],["approvals","Approvals","✓"],["operations","Operations","⇄"],["playbooks","Mass update list","▤"],["audit","Audit","◭"]];
