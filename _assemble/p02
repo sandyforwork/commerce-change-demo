@@ -1,0 +1,195 @@
+const OP_SCREENS = [["list","Mass Updates list"],["new","Describe"],["preview","Preview"],["track","Mass update detail"]];
+const ABC_SCREENS = [["queue","Approval queue"],["review","Review & decide"],["results","Execution & results"]];
+
+let state = { persona:"operator", caseId:"cancel", op:"list", abc:"queue", menu:false };
+let tourIndex = -1;
+const TOUR = [
+  {
+    title:"Talking about mass updates",
+    text:"Today, a mass update moves through DCR or Jira, SQL and CSV preparation, Portal upload, and a separate ABC approval. AI Mass Updates turns that handoff into one guided, visible workflow.",
+    welcome:true,
+    boxes:[["Today","Tickets, spreadsheets, handoffs and limited visibility."],["What changes","Describe, preview, submit, approve and track in one place."],["How fast we could become","Hours of coordinated work can become a guided request in minutes."]],
+    be:[["exist","PUT /mass-modifications/operation/{id}/approve","Starts today’s Kafka jobs. Only write that launches work."],["exist","POST /bulk-operation/items · POST /bulk-operation/operations/commit","Billing executes cancel, price, invoice, create."],["build","POST /changes","New request object in front of MM. No second billing writer."]],
+    state:{persona:"operator",op:"list"}
+  },
+  {
+    title:"One place to start and track every change",
+    text:"Operators see requests, status, affected members and turnaround without chasing a ticket or asking ABC for an update.",
+    selector:".page",
+    vs:{drop:"“Where is my DCR?” emails, Slack pings, and spreadsheet trackers.",add:"Live status, member counts, and turnaround in one list."},
+    be:[["exist","GET /mass-modifications/operation","List MM jobs, RSQL filter, status."],["exist","GET /mass-modifications/operation/{id}/statistics","Item counts only — not $ impact."],["build","GET /changes","Operator inbox and turnaround. Token: change:create, not approve."]],
+    state:{persona:"operator",op:"list"}
+  },
+  {
+    title:"Start from the pre-defined mass update list",
+    text:"The operator chooses the business change—not a Portal guide or an internal operation code. Each item in the pre-defined mass update list maps to an approved Mass Modifications operation.",
+    selector:".body .rowbar .btn.primary",
+    vs:{drop:"Hunting the right Portal guide or operation code.",add:"A business-language start that already maps to an approved operation."},
+    be:[["exist","MM OperationType","SUBSCRIPTION_CANCEL, INVOICE_ADJUSTMENT, SUBSCRIPTION_PRICE_UPDATE, SUBSCRIPTION_CREATE_V2, MEMBERSHIP_TYPE_UPDATE."],["build","GET /playbooks","Catalog: outcome language → operation type, required slots, risk class."]],
+    state:{persona:"operator",op:"list",menu:true}
+  },
+  {
+    title:"Describe the outcome in plain language",
+    text:"The request can come from the operator or an existing DCR. AI reads the request and drafts structured details such as location, scope, dates and cancel code.",
+    selector:".grid2 > .card:nth-child(2)",
+    state:{persona:"operator",op:"new",menu:false},
+    vs:{drop:"Manual SQL, CSV building, and retyping ticket details.",add:"Structured location, scope, dates, and codes from the request."},
+    be:[["build","POST /changes","Create the request. Stores DCR text, club, dates."],["build","POST /changes/{id}/interpret","LLM extracts location, scope, dates, codes. No Billing or approve call."]],
+    ai:"AI is used here to interpret and structure the request. It does not change member data or run the operation."
+  },
+  {
+    title:"Preview impact before submitting",
+    text:"The operator sees eligible and excluded members, reasons, and financial impact before anything leaves their hands.",
+    selector:".kpis",
+    state:{persona:"operator",op:"preview"},
+    vs:{drop:"Uploading blindly and finding exclusions after the run.",add:"Eligible/excluded counts, reasons, and $ impact before submit."},
+    be:[["exist","GET /location · GET /member · GET /item","Live org/catalog reads for club and members."],["exist","POST /mass-modifications/operation-file","Path A: generate CSV, parse, then GET items as the preview."],["build","POST /changes/{id}/preview","Eligibility service. $ impact is a billing read — not in MM statistics."]],
+    ai:"AI can explain the preview and exclusion reasons. Eligibility and financial calculations come from governed business rules and source data."
+  },
+  {
+    title:"Submit once, then follow progress",
+    text:"The request becomes a traceable change with validation, ABC review, execution and results shown in one timeline.",
+    selector:".grid2 > .card:first-child",
+    state:{persona:"operator",op:"track"},
+    vs:{drop:"Separate ticket updates and “did it run?” follow-ups.",add:"One timeline from submit → ABC review → execution → results."},
+    be:[["exist","POST /mass-modifications/operation-file","Create the MM operation from generated CSV."],["exist","GET /mass-modifications/operation/{id}","Poll FILE_PARSING → READY_FOR_APPROVE. Operator cannot PUT approve."],["exist","GET /mass-modifications/operation/{id}/statistics","Counts for the timeline."],["build","GET /changes/{id}","Timeline links the Change to the MM operation id."]],
+    ai:"AI can summarize status and suggest next actions. It cannot approve or execute the change."
+  },
+  {
+    title:"ABC gets a risk-based approval queue",
+    text:"Billing Ops sees why each request needs review—revenue impact, member charges or location-wide scope. Safe demographic updates can auto-clear under explicit policy.",
+    selector:".card",
+    vs:{drop:"A flat ticket pile with no risk signal.",add:"Risk-ranked queue; safe demographic work can auto-clear."},
+    be:[["exist","GET /mass-modifications/operation?q=status==READY_FOR_APPROVE","Today’s ready-to-approve list."],["build","GET /changes?status=submitted","ABC inbox with risk score. Policy decides auto-clear vs queue."]],
+    state:{persona:"abc",abc:"queue"}
+  },
+  {
+    title:"AI prepares the review, people make the decision",
+    text:"The reviewer gets a concise impact summary, governed checks, exclusions and a sample of affected records before deciding.",
+    selector:".grid2 > .card:first-child",
+    state:{persona:"abc",abc:"review"},
+    vs:{drop:"Rebuilding impact from attachments, SQL, and ticket comments.",add:"Summary, checks, exclusions, and a sample in one review."},
+    be:[["exist","GET /mass-modifications/operation/{id}","Representation + sample items for the review."],["exist","GET /mass-modifications/operation/{id}/statistics","Success vs failed line counts."],["build","GET /changes/{id}","Read-only AI summary on the Change. No Billing write."]],
+    ai:"AI summarizes and explains evidence. The ABC reviewer remains the approver; AI cannot approve on their behalf."
+  },
+  {
+    title:"Approval is the execution boundary",
+    text:"Only an authorized ABC reviewer can select “Approve and run.” The existing Mass Modifications service performs the operation and preserves its controls and audit trail.",
+    selector:".body .rowbar .btn.primary",
+    state:{persona:"abc",abc:"review"},
+    vs:{drop:"An informal “go ahead” in a ticket, then a later Portal run.",add:"Explicit Approve and run on the same service and audit trail."},
+    be:[["exist","PUT /mass-modifications/operation/{id}/approve","Only this starts jobs. ABC token: operation:write."],["exist","POST /bulk-operation/items","MM Kafka fans out to Billing items."],["exist","POST /bulk-operation/operations/commit","Billing commit — subscriptions, invoices, members."],["build","OAuth split","AI never holds the approve credential."]],
+    ai:"AI is outside the execution path. It never calls the approval endpoint or writes member, subscription or invoice changes."
+  },
+  {
+    title:"Results are visible and actionable",
+    text:"Success, failures and run phases are returned to both teams. Exceptions are grouped so the next request can focus only on unresolved records.",
+    selector:".grid11 > .card:nth-child(2)",
+    state:{persona:"abc",abc:"results"},
+    vs:{drop:"Spreadsheet reconciliation and unanswered failure lists.",add:"Shared results, grouped exceptions, and a retry-ready next request."},
+    be:[["exist","GET /mass-modifications/operation/{id}","Status SUCCESS / PARTIAL_SUCCESS / FAILED."],["exist","GET operation items","Per-row errors already stored on the operation."],["build","POST /changes","Retry the failed subset. Re-validate, then ABC PUT approve again."]],
+    ai:"AI groups similar errors and drafts a retry plan. Re-validation and human approval still happen before any retry."
+  },
+  {
+    title:"From coordinated effort to controlled speed",
+    text:"AI Mass Updates removes preparation and status-chasing while keeping ABC approval, governed rules and the current execution service in control.",
+    welcome:true,
+    boxes:[["Faster","A guided request and preview in minutes."],["Safer","Preview, exclusions, approval and audit by design."],["Clear AI boundary","AI interprets and explains; people approve; services execute."]],
+    be:[["exist","PUT …/approve → POST /bulk-operation/*","MM + Billing stay the only write path after approve."],["build","POST /changes · /interpret · /preview · GET /playbooks","Plus payload generator, UIs, and OAuth split. No new billing writer."]],
+    state:{persona:"operator",op:"list"}
+  }
+];
+const esc = s => String(s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;");
+const cur = () => CASES.find(c => c.id === state.caseId) || CASES[0];
+const badge = t => `<span class="badge" style="color:${HUE[STATUS_HUE[t]||"gray"]};background:${TINT[STATUS_HUE[t]||"gray"]}"><i>${esc(t)}</i></span>`;
+const dot = h => `<span class="dot" style="background:${HUE[h]}"></span>`;
+const kpis = items => `<div class="kpis">${items.map(k =>
+  `<div class="kpi" style="border-top-color:${HUE[k.h]}"><div class="l">${esc(k.l)}</div><div class="v" style="color:${HUE[k.h]}">${esc(k.v)}</div></div>`).join("")}</div>`;
+const filters = (ph, chips) => `<div class="filters"><div class="left"><div class="fin">${esc(ph)}</div>${
+  chips.map(c=>`<span class="chip">＋ ${esc(c)}</span>`).join("")}</div><span class="chip">⇅ View</span></div>`;
+const foot = (sel,total) => `<div class="foot"><span class="note">${sel} of ${total} row(s) selected.</span>
+  <div class="r"><span>Rows per page 10</span><span>Page 1 of 1</span>
+  <span class="pg"><span>�><span>Rows per page 10</span><span>Page 1 of 1</span>
+  <span class="pg"><span>≪</span><span>‹</span><span>›</span><span>≫</span></span></div></div>`;
+
+function shell(inner) {
+  const c = cur(), isOp = state.persona === "operator";
+  const nav = isOp ? OP_NAV : ABC_NAV;
+  const activeNav = isOp ? "changes" : (state.abc === "results" ? "operations" : "approvals");
+  const crumbs = isOp
+    ? {list:"Dashboard / Mass Updates", new:"Dashboard / Mass Updates / New", preview:"Dashboard / Mass Updates / New", track:"Dashboard / Mass Updates / "+c.changeId}
+    : {queue:"Data Administration / Approvals", review:"Data Administration / Approvals / "+c.operationNo, results:"Data Administration / Operations / "+c.operationNo};
+  const titles = isOp
+    ? {list:"Mass Updates", new:"New Mass update", preview:"New Mass update", track:c.changeId}
+    : {queue:"Approvals", review:c.operationNo, results:c.operationNo};
+  const key = isOp ? state.op : state.abc;
+  const org = isOp ? c.club : "ABC Fitness Solutions";
+  const orgSub = isOp ? c.clubNo : "Data Administration";
+  const avatar = isOp ? c.club.slice(0,2) : "ABC";
+  const avatarBg = isOp ? "var(--accent)" : "var(--blue)";
+  const user = isOp ? "Alex Brown" : "Morgan Geiszler";
+  const userSub = isOp ? "Operator" : "Billing Ops · approver";
+  const userBg = isOp ? "var(--purple)" : "var(--green)";
+  return `
+  <div class="crumb">${esc(crumbs[key])}</div>
+  <div class="page">
+    <div class="side">
+      <div>
+        ${isOp ? `<div class="ff-logo"><div class="ff-mark">FF</div><div><div class="ff-name">Fitness Fitness</div><div class="ff-tag">Club portal</div></div></div>` : ""}
+        <div class="org">
+          <div class="av" style="background:${avatarBg}">${esc(avatar)}</div>
+          <div style="min-width:0;flex:1"><div class="nm">${esc(org)}</div><div class="sub">${esc(orgSub)}</div></div>
+          <span class="faint" style="font-size:11px">⌃⌄</span>
+        </div>
+        <div class="nav">${nav.map(([id,label,g]) =>
+          `<div class="${id===activeNav?"on":""}"><span class="g">${g}</span>${label}</div>`).join("")}</div>
+      </div>
+      <div>
+        <div class="nav" style="margin:0">
+          <div><span class="g">⚙</span>Settings</div>
+          <div><span class="g">?</span>Get help</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px;padding-top:10px;margin-top:10px;border-top:1px solid var(--border)">
+          <div class="av" style="background:${userBg}">${user.split(" ").map(w=>w[0]).join("")}</div>
+          <div style="min-width:0"><div style="font-size:12px">${esc(user)}</div><div class="sub faint" style="font-size:11px">${esc(userSub)}</div></div>
+        </div>
+      </div>
+    </div>
+    <div class="main">
+      <div class="topbar">
+        <div style="display:flex;align-items:center;gap:10px"><span class="faint">▥</span><span class="title">${esc(titles[key])}</span></div>
+        <div class="search">⌕&nbsp;&nbsp;Search</div>
+      </div>
+      <div class="body">${inner}</div>
+    </div>
+  </div>`;
+}
+
+function operatorList() {
+  const menu = state.menu ? `<div class="menu">${CASES.map(c =>
+    `<div onclick="pickPlaybook('${c.id}')">${dot(c.hue)}${esc(c.playbook)}</div>`).join("")}</div>` : "";
+  return `
+  <div class="rowbar">
+    <div class="tabs"><span class="on">Overview</span><span>Archived</span></div>
+    <div style="display:flex;align-items:center;gap:8px;position:relative">
+      <span class="btn">Export</span>
+      <span class="btn primary" onclick="toggleMenu()">New Mass update <span style="opacity:.85">⌄</span></span>
+      ${menu}
+    </div>
+  </div>
+  ${kpis([{l:"In review with ABC",v:"3",h:"blue"},{l:"Needs your input",v:"1",h:"orange"},
+          {l:"Completed this week",v:"3",h:"green"},{l:"Avg turnaround",v:"2–4 hrs",h:"purple"}])}
+  ${filters("Filter mass updates...",["Mass update list","Status","Location"])}
+  <div class="card"><div class="scroll"><table>
+    <thead><tr><th style="width:34px"><input type="checkbox" disabled></th>
+    ${["Change","Status","Mass update list","Location","Request","Submitted","Members"].map(h=>`<th>${h}</th>`).join("")}
+    <th style="width:34px"></th></tr></thead>
+    <tbody>${LIST_ROWS.map(r=>`<tr>
+      <td><input type="checkbox" disabled></td>
+      <td class="link" onclick="openChange('${r.caseId}')">${r.change}</td>
+      <td>${badge(r.status)}</td>
+      <td>${dot(r.hue)} ${esc(r.playbook)}</td>
+      <td class="muted">${esc(r.location)}</td>
+      <td class="faint">${r.dcr}</td>
+      <td>${r.submitted}</td>
+      <td class="strong">${r.members}</td>
