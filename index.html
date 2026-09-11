@@ -52,14 +52,12 @@
   .wrap { max-width: 1180px; margin: 0 auto; display: flex; flex-direction: column; gap: 14px; }
   h1 { font-size: 22px; line-height: 28px; margin: 0; font-weight: 600; }
   .head { display: flex; align-items: center; gap: 14px; flex-wrap: wrap; }
-
   .seg { display: flex; gap: 4px; padding: 3px; border-radius: 8px; background: #eceef1; }
   .seg span {
     padding: 5px 12px; border-radius: 6px; font-size: 13px; cursor: pointer;
     color: var(--text-2); border: 1px solid transparent; user-select: none;
   }
   .seg span.on { background: #fff; border-color: var(--border); color: var(--accent); font-weight: 600; }
-
   .pills { display: flex; gap: 6px; flex-wrap: wrap; align-items: center; }
   .pill {
     display: inline-flex; align-items: center; gap: 7px; padding: 5px 11px;
@@ -68,10 +66,8 @@
   }
   .dot { width: 8px; height: 8px; border-radius: 3px; display: inline-block; flex: 0 0 8px; }
   .pill.on { font-weight: 600; }
-
   .page { display: flex; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; background: var(--surface); }
   .crumb { font-size: 12px; color: var(--text-3); margin-bottom: 6px; }
-
   .side {
     width: 212px; flex: 0 0 212px; border-right: 1px solid var(--border); background: var(--chrome);
     display: flex; flex-direction: column; justify-content: space-between; padding: 10px; min-height: 560px;
@@ -107,7 +103,6 @@
   .nav div .g { width: 14px; color: var(--text-3); }
   .nav div.on { background: color-mix(in srgb, var(--accent) 12%, #fff); color: var(--accent); font-weight: 600; }
   .nav div.on .g { color: var(--accent); }
-
   .main { flex: 1; min-width: 0; display: flex; flex-direction: column; }
   .topbar {
     display: flex; align-items: center; justify-content: space-between; gap: 12px;
@@ -119,12 +114,10 @@
     font-size: 13px; color: var(--text-3); background: #fff;
   }
   .body { padding: 16px; display: flex; flex-direction: column; gap: 14px; }
-
   .rowbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
   .tabs { display: flex; gap: 4px; padding: 3px; border-radius: 8px; background: #f2f3f5; }
   .tabs span { padding: 5px 10px; border-radius: 6px; font-size: 13px; color: var(--text-2); border: 1px solid transparent; }
   .tabs span.on { background: #fff; border-color: var(--border); color: var(--text); font-weight: 600; }
-
   .btn {
     display: inline-flex; align-items: center; gap: 6px; padding: 6px 12px; border-radius: 7px;
     font-size: 13px; font-weight: 500; cursor: pointer; border: 1px solid var(--border);
@@ -133,7 +126,6 @@
   .btn.primary { background: var(--accent); border-color: var(--accent); color: #fff; }
   .btn.danger { color: var(--red); border-color: #f2c8c8; }
   .btn:hover { filter: brightness(0.98); }
-
   .menu {
     position: absolute; top: 36px; right: 0; z-index: 20; width: 252px; padding: 6px;
     border: 1px solid var(--border); border-radius: 9px; background: #fff;
@@ -144,12 +136,10 @@
     font-size: 13px; cursor: pointer;
   }
   .menu div:hover { background: #f5f6f8; }
-
   .kpis { display: grid; grid-template-columns: repeat(4, minmax(0,1fr)); gap: 12px; }
   .kpi { border: 1px solid var(--border); border-top-width: 2px; border-radius: 8px; padding: 13px 14px; background: #fff; }
   .kpi .l { font-size: 12px; color: var(--text-2); }
   .kpi .v { font-size: 24px; font-weight: 650; margin-top: 6px; }
-
   .filters { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; }
   .filters .left { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
   .fin { width: 186px; padding: 6px 10px; border: 1px solid var(--border); border-radius: 7px; font-size: 13px; color: var(--text-3); background: #fff; }
@@ -157,12 +147,10 @@
     display: inline-flex; align-items: center; gap: 5px; padding: 5px 10px; border-radius: 7px;
     font-size: 12px; color: var(--text-2); border: 1px dashed #d7dae0; background: #fff; cursor: pointer;
   }
-
   .card { border: 1px solid var(--border); border-radius: 8px; background: #fff; }
   .card.pad { padding: 14px; }
   .card .ch { padding: 12px 14px; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
   .card .ch b { font-size: 13px; font-weight: 650; }
-
   table { width: 100%; border-collapse: collapse; }
   th {
     text-align: left; font-size: 12px; font-weight: 500; color: var(--text-2);
@@ -176,13 +164,11 @@
   .faint { color: var(--text-3); }
   .strong { font-weight: 600; }
   .scroll { overflow-x: auto; }
-
   .badge {
     display: inline-flex; align-items: center; padding: 2px 9px; border-radius: 999px;
     font-size: 11px; font-weight: 550; white-space: nowrap; border: 1px solid currentColor;
   }
   .badge i { font-style: normal; }
-
   .grid2 { display: grid; grid-template-columns: minmax(0,1.25fr) minmax(0,1fr); gap: 12px; }
   .grid11 { display: grid; grid-template-columns: minmax(0,1fr) minmax(0,1fr); gap: 12px; }
   .quote {
@@ -266,17 +252,3 @@
   <div class="hint">Click through: pick from the <b>pre-defined mass update list</b> in <b>New Mass update</b>, or switch persona to see the ABC side of the same request.</div>
 </div>
 <div id="tour"></div>
-<script>
-const HUE = { gray:"var(--gray)", purple:"var(--purple)", green:"var(--green)", yellow:"var(--yellow)", cyan:"var(--cyan)", blue:"var(--blue)", orange:"var(--orange)", red:"var(--red)" };
-const TINT = { gray:"#f3f4f6", purple:"#f5f0ff", green:"#eefaf1", yellow:"#fdf6e3", cyan:"#e9f7fb", blue:"#eef2ff", orange:"#fff2ea", red:"#fdeeee" };
-const STATUS_HUE = {"In Review":"blue", "Needs Input":"orange", "Completed":"green", "Partial Success":"yellow", "Draft":"gray", "Eligible":"green", "Excluded":"orange", "Done":"green", "Waiting":"blue", "Queued":"blue", "Not started":"gray", "Skipped":"gray", "Auto-cleared":"green", "Awaiting approval":"orange", "AI draft":"green", "AI summary":"green", "AI grouped":"green"};
-let state = { persona:"operator", caseId:"cancel", op:"list", abc:"queue", menu:false };
-let tourIndex = -1;
-const TOUR = [{title:"Talking about mass updates",text:"Today, a mass update moves through DCR or Jira, SQL and CSV preparation, Portal upload, and a separate ABC approval. AI Mass Updates turns that handoff into one guided, visible workflow.",welcome:true,boxes:[["Today","Tickets, spreadsheets, handoffs and limited visibility."],["What changes","Describe, preview, submit, approve and track in one place."],["How fast we could become","Hours of coordinated work can become a guided request in minutes."]],be:[["exist","PUT /mass-modifications/operation/{id}/approve","Starts today’s Kafka jobs. Only write that launches work."],["exist","POST /bulk-operation/items · POST /bulk-operation/operations/commit","Billing executes cancel, price, invoice, create."],["build","POST /changes","New request object in front of MM. No second billing writer."]],state:{persona:"operator",op:"list"}},{title:"Describe the outcome in plain language",text:"The request can come from the operator or an existing DCR. AI reads the request and drafts structured details such as location, scope, dates and cancel code.",state:{persona:"operator",op:"new",menu:false},be:[["build","POST /changes","Create the request. Stores DCR text, club, dates."],["build","POST /changes/{id}/interpret","LLM extracts location, scope, dates, codes. No Billing or approve call."]],ai:"AI is used here to interpret and structure the request. It does not change member data or run the operation."},{title:"Approval is the execution boundary",text:"Only an authorized ABC reviewer can select Approve and run. The existing Mass Modifications service performs the operation and preserves its controls and audit trail.",state:{persona:"abc",abc:"review"},be:[["exist","PUT /mass-modifications/operation/{id}/approve","Only this starts jobs. ABC token: operation:write."],["exist","POST /bulk-operation/items","MM Kafka fans out to Billing items."],["exist","POST /bulk-operation/operations/commit","Billing commit."],["build","OAuth split","AI never holds the approve credential."]],ai:"AI is outside the execution path."}];
-function renderTour(){ const step=TOUR[Math.max(0,tourIndex)]; const be = step.be ? `<div class="tour-be"><b>APIs this step uses</b>${step.be.map(([k,api,why])=>`<div class="row"><span class="tag ${k}">${k==="exist"?"Exists":"Build"}</span><div><div class="api">${api}</div><div class="why">${why||""}</div></div></div>`).join("")}</div>` : ""; document.getElementById("tour").innerHTML = `<section class="tour-panel"><div class="tour-content"><h2>${step.title}</h2><p>${step.text}</p>${be}</div><div class="tour-actions"><button class="next" onclick="tourIndex=Math.min(TOUR.length-1,tourIndex+1);renderTour()">Next</button></div></section>`; }
-function startTour(){ tourIndex=0; renderTour(); }
-renderTour = renderTour;
-document.getElementById("app").innerHTML = "<p class=note>Demo UI scripts were truncated in publish. Walkthrough APIs remain below after clicking Leadership walkthrough.</p>";
-</script>
-</body>
-</html>
